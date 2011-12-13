@@ -361,4 +361,9 @@ class block_onlinesurvey extends block_base {
 				" - " . $msg . "\n" );
 		}
 	}
+
+
+  function _self_test() {
+    return true;
+  }
 }
