@@ -152,17 +152,22 @@ class block_onlinesurvey extends block_base {
 					$this->logMsg("Found $surveyCount surveys");
 					if($surveyCount)
 					{
+						$list = '';
+
 						foreach($SESSION->ep_surveyKeys->OnlineSurveyKeys as
 							$onlineSurveyKey)
 						{
-							$this->content->text .= "<a href='" .
+							$list .= "<li><a href='" .
 								$this->surveyLogin .
 								SURVEY_URL .
 								$onlineSurveyKey->TransactionNumber .
 								"' target='_blank'>" .
 								$onlineSurveyKey->CourseName .
-								"</a><br>";
+								"</a></li>";
 						}
+
+						$instructions = get_string('survey_instructions', 'block_onlinesurvey');
+						$this->content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
 					}
 				}
 
@@ -355,6 +360,7 @@ class block_onlinesurvey extends block_base {
 
 	function logMsg($msg = '')
 	{
+
 		if($this->logFileHandle)
 		{
 			fwrite($this->logFileHandle, strftime("%b %d %H:%M:%S", time()) .
