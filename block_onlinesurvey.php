@@ -157,12 +157,18 @@ class block_onlinesurvey extends block_base {
 						foreach($SESSION->ep_surveyKeys->OnlineSurveyKeys as
 							$onlineSurveyKey)
 						{
+
+							$moduleCode = "";
+							if(isset($onlineSurveyKey->Instructor->LastName) && trim($onlineSurveyKey->Instructor->LastName) != ""){
+								$moduleCode = " (".trim($onlineSurveyKey->Instructor->LastName).")";
+							}
+							
 							$list .= "<li><a href='" .
 								$this->surveyLogin .
 								SURVEY_URL .
 								$onlineSurveyKey->TransactionNumber .
 								"' target='_blank'>" .
-								$onlineSurveyKey->CourseName .
+								$onlineSurveyKey->CourseName . $moduleCode .
 								"</a></li>";
 						}
 
