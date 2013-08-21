@@ -123,10 +123,11 @@ class block_onlinesurvey extends block_base {
 					$SESSION->ep_surveyKeys = $this->getSurveys();
 				}
 
-				if($SESSION->ep_surveyKeys === False && !$this->isDebug)
+				if($SESSION->ep_surveyKeys === False ) //&& !$this->isDebug)
 				{
 					$this->content->text =
 						get_string('no_surveys', 'block_onlinesurvey');
+					$this->logMsg("no surveys");
 					return;
 				}
 
@@ -141,6 +142,7 @@ class block_onlinesurvey extends block_base {
 				}
 				elseif(is_object($SESSION->ep_surveyKeys))
 				{
+					$this->logMsg("Surveys to do");
 					if(!is_array($SESSION->ep_surveyKeys->OnlineSurveyKeys))
 					{
 						$SESSION->ep_surveyKeys->OnlineSurveyKeys = array(
@@ -175,6 +177,9 @@ class block_onlinesurvey extends block_base {
 						$instructions = get_string('survey_instructions', 'block_onlinesurvey');
 						$this->content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
 					}
+					$this->logMsg("Found - ");
+				} else {
+					$this->logMsg("Found issue in surveys - ");
 				}
 
 				if($this->isDebug)
@@ -216,6 +221,7 @@ class block_onlinesurvey extends block_base {
 					'Header', $header_input);
 
 				$client->__setSoapHeaders($soapHeaders);
+				$this->logMsg("SOAP Client status - ".var_export($client,TRUE));
 			}
 			else
 			{
@@ -223,8 +229,12 @@ class block_onlinesurvey extends block_base {
 				return False;
 			}
 
-			return $client->GetPswdsByParticipant(
+			$this->logMsg("Call GetPswdsByParticipant");
+			$temp_data = $client->GetPswdsByParticipant(
 				$this->moodle_email);
+			$this->logMsg("SOAP Client - ".var_export($client,TRUE));
+			$this->logMsg("getSurveys return - ".var_export($temp_data,TRUE));
+			return $temp_data;
 		}
 		catch(Exception $e)
 		{
