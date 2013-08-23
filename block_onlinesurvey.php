@@ -1,391 +1,220 @@
 <?php
-
-define('SURVEY_URL', 'indexstud.php?type=html&user_tan=');
-
 class block_onlinesurvey extends block_base {
+    const SURVEY_URL = 'indexstud.php?type=html&user_tan=';
 
-	private $isDebug;
-	private $isConfigured;
-	private $logFileHandle = NULL;
-	private $guiError;
+    private $debugmode;
+    private $isconfigured;
+    private $warning;
+    private $error;
+    private $connectionok;
 
-	private $surveyLogin;
+    private $surveyurl;
 
-	private $soap_wsdlUrl;
-	private $soap_user;
-	private $soap_password;
-	private $soap_timeout;
-	private $soap_namespace;
+    private $wsdl;
+    private $soapuser;
+    private $soappassword;
+    private $timeout;
+    private $wsdlnamespace;
 
-	private $moodle_userId;
-	private $moodle_username;
-	private $moodle_email;
+    private $moodleuserid;
+    private $moodleusername;
+    private $moodleemail;
 
-	function init()
-	{
-		global $CFG;
+    public function init() {
+        global $CFG;
 
-		$this->title = get_string('pluginname', 'block_onlinesurvey');
+        $this->title = get_string('pluginname', 'block_onlinesurvey');
 
-		if(isset($CFG))
-		{
-			# Block settings
-			$this->surveyLogin = $CFG->block_onlinesurvey_survey_login;
+        if (isset($CFG)) {
+            // Block settings.
+            $this->debugmode = $CFG->block_onlinesurvey_survey_debug == 1;
+            $this->surveyurl = $CFG->block_onlinesurvey_survey_login;
+            $this->wsdl = $CFG->block_onlinesurvey_survey_server;
+            $this->soapuser = $CFG->block_onlinesurvey_survey_user;
+            $this->soappassword = $CFG->block_onlinesurvey_survey_pwd;
+            $this->timeout = $CFG->block_onlinesurvey_survey_timeout;
+            if (!$this->timeout) {
+                $this->timeout = 3;
+            }
 
-			$this->soap_wsdlUrl = $CFG->block_onlinesurvey_survey_server;
-			$this->soap_user = $CFG->block_onlinesurvey_survey_user;
-			$this->soap_password = $CFG->block_onlinesurvey_survey_pwd;
-			$this->soap_timeout = $CFG->block_onlinesurvey_survey_timeout;
-			if(!$this->soap_timeout)
-			{
-				$this->soap_timeout = 3;
-			}
+            // Session information.
+            global $USER;
+            if ($this->moodleuserid = $USER->id) {
+                $this->moodleusername = $USER->username;
+                $this->moodleemail = $USER->email;
 
+                // Parse wsdlnamespace from the wsdl url.
+                preg_match('/\/([^\/]+\.wsdl)$/', $this->wsdl, $matches);
 
-			$this->isDebug = $CFG->block_onlinesurvey_survey_debug == 1;
-			$logFilePath = $CFG->block_onlinesurvey_survey_logfile;
+                if (count($matches) == 2) {
+                    $this->wsdlnamespace = $matches[1];
+                    $this->isconfigured = true;
+                } else {
+                    $this->isconfigured = false;
+                    $this->handle_error("WSDL namespace parse error");
+                }
+            } else {
+                $this->isconfigured = false;
+                $this->handle_error("User ID not found");
+            }
+        } else {
+            $this->handle_error("Configuration not accessible");
+            $this->isconfigured = false;
+        }
+    }
 
-			if($this->isDebug)
-			{
-				try
-				{
-					$this->logFileHandle = fopen($logFilePath, "a");
-				}
-				catch(Exception$e)
-				{ }
-			}
+    public function get_content() {
+        global $SESSION;
+        if (!empty($this->content)) {
+            return $this->content;
+        }
 
-			# Session information
-			global $USER;
-			if($this->moodle_userId = $USER->id)
-			{
-				$this->moodle_username = $USER->username;
-				$this->moodle_email = $USER->email;
+        if ($this->moodleuserid && $this->isconfigured) {
+            $this->content = new stdClass();
+            $this->content->footer = '<hr />' . get_string('copyright', 'block_onlinesurvey');
 
-				$this->logMsg("Block initialization completed");
+            if (!isset($SESSION->block_onlinesurvey_surveykeys) || $this->debugmode) {
+                $SESSION->block_onlinesurvey_surveykeys = $this->get_surveys();
+            }
 
-				# Parse namespace from the wsdl url
-				preg_match('/\/([^\/]+\.wsdl)$/', $this->soap_wsdlUrl,
-					$matches);
+            if ($SESSION->block_onlinesurvey_surveykeys === false && !$this->debugmode) {
+                $this->content->text = get_string('no_surveys', 'block_onlinesurvey');
+                return;
+            }
 
-				if(count($matches) == 2)
-				{
-					$this->soap_namespace = $matches[1];
-					$this->isConfigured = True;
-				}
-				else
-				{
-					$this->isConfigured = False;
-					$this->handleError("WSDL namespace parse error");
-				}
-			}
-			else
-			{
-				$this->isConfigured = False;
-				$this->handleError("User ID not found");
-			}
-		}
-		else
-		{
-			$this->handleError("Configuration not accessible");
-			$this->isConfigured = False;
-		}
-	}
+            $context = get_context_instance(CONTEXT_SYSTEM);
+            if (has_capability('moodle/site:config', $context)) {
+                if ($this->connectionok) {
+                    $this->content->text = get_string('conn_works', 'block_onlinesurvey');
+                }
+            } else if (is_object($SESSION->block_onlinesurvey_surveykeys)) {
+                if (!is_array($SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys)) {
+                    $SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys = array(
+                        $SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys
+                    );
+                }
 
-	function get_content()
-	{
-		global $SESSION;
-		if(!empty($this->content))
-		{
-			return $this->content;
-		}
+                $count = count($SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys);
+                if ($count) {
+                    foreach ($SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys as $surveykey) {
+                        $this->content->text .= "<a href=\"{$this->surveyurl}" . self::SURVEY_URL .
+                                                "{$surveykey->TransactionNumber}\" target=\"_blank\">".
+                                                "{$surveykey->CourseName}</a><br>";
+                    }
+                }
+            }
+        }
 
-		if($this->moodle_userId && $this->isConfigured)
-		{
-			$this->logMsg("Validating configuration");
-			$validationResult = $this->validateConfig();
-			if(!$validationResult[0])
-			{
-				# Configuration error
-				$this->handleError($validationResult);
-			}
-			else
-			{
-				$this->content = new stdClass;
+        $context = get_context_instance(CONTEXT_SYSTEM);
+        if (has_capability('moodle/site:config', $context)) {
+            if ($this->debugmode && $this->error && !$this->connectionok) {
+                $this->content->text = "<b>An error has occured:</b><br />{$this->error}<br />" . $this->content->text;
+            }
+        } else if ($this->debugmode && $this->error) {
+            $this->content->text = "<b>An error has occured:</b><br />{$this->error}<br />" . $this->content->text;
+        }
 
-				$this->content->footer = get_string('copyright',
-					'block_onlinesurvey');
+        if ($this->debugmode && $this->warning) {
+            $this->content->text = "<b>Warning:</b><br />{$this->warning}<hr />" . $this->content->text;
+        }
+    }
 
-				if(!isset($SESSION->ep_surveyKeys) || $this->isDebug)
-				{
-					$this->logMsg("Fetching surveys for '" .
-						$this->moodle_email . "'");
-					$SESSION->ep_surveyKeys = $this->getSurveys();
-				}
+    private function get_surveys() {
+        try {
+            require_once('onlinesurvey_soap_client.php');
+            $client = new onlinesurvey_soap_client( $this->wsdl,
+                array(
+                    'trace' => 1,
+                    'feature' => SOAP_SINGLE_ELEMENT_ARRAYS,
+                    'connection_timeout' => $this->timeout),
+                $this->timeout,
+                $this->debugmode
+            );
 
-				if($SESSION->ep_surveyKeys === False ) //&& !$this->isDebug)
-				{
-					$this->content->text =
-						get_string('no_surveys', 'block_onlinesurvey');
-					$this->logMsg("no surveys");
-					return;
-				}
+            $header = array(
+                'Login' => $this->soapuser,
+                'Password' => $this->soappassword
+            );
 
-				if($this->moodle_username == "admin")
-				{
-					if(!$this->guiError)
-					{
-						$this->content->text =
-							get_string('conn_works', 'block_onlinesurvey');
-						$this->logMsg("Connection test successful");
-					}
-				}
-				elseif(is_object($SESSION->ep_surveyKeys))
-				{
-					$this->logMsg("Surveys to do");
-					if(!is_array($SESSION->ep_surveyKeys->OnlineSurveyKeys))
-					{
-						$SESSION->ep_surveyKeys->OnlineSurveyKeys = array(
-							$SESSION->ep_surveyKeys->OnlineSurveyKeys,
-						);
-					}
-					$surveyCount = count(
-						$SESSION->ep_surveyKeys->OnlineSurveyKeys);
-					$this->logMsg("Found $surveyCount surveys");
-					if($surveyCount)
-					{
-						$list = '';
+            if (is_object($client)) {
+                if ($client->haswarning) {
+                    $this->warning = $client->warnmessage;
+                }
 
-						foreach($SESSION->ep_surveyKeys->OnlineSurveyKeys as
-							$onlineSurveyKey)
-						{
+                $soapheader = new SoapHeader($this->wsdlnamespace, 'Header', $header);
+                $client->__setSoapHeaders($soapheader);
+            } else {
+                $this->handle_error("SOAP client configuration error");
+                return false;
+            }
 
-							$moduleCode = "";
-							if(isset($onlineSurveyKey->Instructor->LastName) && trim($onlineSurveyKey->Instructor->LastName) != ""){
-								$moduleCode = " (".trim($onlineSurveyKey->Instructor->LastName).")";
-							}
-							
-							$list .= "<li><a href='" .
-								$this->surveyLogin .
-								SURVEY_URL .
-								$onlineSurveyKey->TransactionNumber .
-								"' target='_blank'>" .
-								$onlineSurveyKey->CourseName . $moduleCode .
-								"</a></li>";
-						}
+            $this->connectionok = true;
+            return $client->GetPswdsByParticipant($this->moodleemail);
+        } catch (Exception $e) {
+            $this->handle_error($e);
+            return false;
+        }
+    }
 
-						$instructions = get_string('survey_instructions', 'block_onlinesurvey');
-						$this->content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
-					}
-					$this->logMsg("Found - ");
-				} else {
-					$this->logMsg("Found issue in surveys - ");
-				}
+    private function handle_error($err) {
+        if (is_array($err)) {
+            // Configuration validation error.
+            if (!$err[0]) {
+                $this->log_error($err[1]);
+            }
+        } else if (is_string($err)) {
+            // Simple error message.
+            $this->log_error($err);
+        } else {
+            // Error should be an exception.
+            $this->log_error($this->pretty_print_exceptions($err));
+        }
+    }
 
-				if($this->isDebug)
-				{
-					fclose($this->logFileHandle);
-				}
-			}
-		}
-		if($this->isDebug && $this->guiError)
-		{
-			$this->content->text = "<b>An error has occured:</b>:<br />'" .
-				$this->guiError . "'";
-		}
-	}
+    public function has_config() {
+        return true;
+    }
 
-	function getSurveys()
-	{
-		# Client settings
-		ini_set('soap.wsdl_cache', 0);
-		ini_set('soap.wsdl_cache_enabled', 0);
-		ini_set('default_socket_timeout', $this->soap_timeout);
+    public function config_save($data) {
+        foreach ($data as $name => $value) {
+            set_config($name, $value);
+        }
 
-		try
-		{
-			$client = new SoapClient( $this->soap_wsdlUrl,
-				array(
-					'trace' => 1,
-					'feature' => SOAP_SINGLE_ELEMENT_ARRAYS)
-				);
+        return true;
+    }
 
-			$header_input = array(
-				'Login' => $this->soap_user,
-				'Password' => $this->soap_password,
-			);
+    public function instance_allow_multiple() {
+        return false;
+    }
 
-			if(is_object($client))
-			{
-				$soapHeaders = new SoapHeader($this->soap_namespace,
-					'Header', $header_input);
+    public function hide_header() {
+        return false;
+    }
 
-				$client->__setSoapHeaders($soapHeaders);
-				$this->logMsg("SOAP Client status - ".var_export($client,TRUE));
-			}
-			else
-			{
-				handleError("SOAP client configuration error");
-				return False;
-			}
+    public function applicable_formats() {
+        $context = get_context_instance(CONTEXT_SYSTEM);
+        if (has_capability('moodle/site:config', $context)) {
+            return array('all' => true);
+        } else {
+            return array(
+                'all' => false,
+                'admin' => true
+            );
+        }
+    }
 
-			$this->logMsg("Call GetPswdsByParticipant");
-			$temp_data = $client->GetPswdsByParticipant(
-				$this->moodle_email);
-			$this->logMsg("SOAP Client - ".var_export($client,TRUE));
-			$this->logMsg("getSurveys return - ".var_export($temp_data,TRUE));
-			return $temp_data;
-		}
-		catch(Exception $e)
-		{
-			$this->handleError($e);
-			return False;
-		}
-	}
+    private function pretty_print_exceptions($e) {
+        $msg = '';
+        if (get_class($e) == "SoapFault") {
+            $msg = "{$e->faultstring}: {$e->detail}";
+        } else {
+            $msg = $e->getMessage();
+        }
 
-	function validateConfig()
-	{
-		if(!$this->checkUrl($this->soap_wsdlUrl))
-		{
-			return Array(False, "Invalid WSDL URL");
-		}
+        return $msg;
+    }
 
-		if(!$this->checkUrl($this->surveyLogin . 'index.php'))
-		{
-			return Array(False, "Invalid survey login address");
-		}
-
-		return Array(True, "No configuration errors found");
-	}
-
-	private function checkUrl($p_url)
-	{
-		if ($parsedUrl = parse_url($p_url))
-		{
-			$fileHandle = fsockopen($parsedUrl['host'], 80);
-
-			if($fileHandle)
-			{
-				$httpMessage = "GET {$parsedUrl['path']} HTTP/1.1\r\n";
-				$httpMessage .= "Host: {$parsedUrl['host']}\r\n";
-				$httpMessage .= "Connection: Close\r\n\r\n";
-				fwrite($fileHandle, $httpMessage);
-
-				$httpResponse = "";
-				while (!feof($fileHandle))
-				{
-					$httpResponse .= fgets($fileHandle, 128);
-				}
-				fclose($fileHandle);
-
-				$httpPattern = "/HTTP\/1\.\d\s(\d+)/";
-
-				return(preg_match($httpPattern, $httpResponse, $matches) &&
-					($matches[1] == 200 || $matches[1] == 302));
-			}
-			else
-			{
-				return False;
-			}
-		}
-		else
-		{
-			return False;
-		}
-	}
-
-	function handleError($err)
-	{
-		if(is_array($err))
-		{
-			# Configuration validation error
-			if(!$err[0])
-			{
-				$this->logError($err[1]);
-			}
-		}
-		elseif(is_string($err))
-		{
-			# Simple error message
-			$this->logError($err);
-		}
-		else
-		{
-			# Error should be an exception
-			$this->logError($this->ppExc($err));
-		}
-	}
-
-	function has_config()
-	{
-		return True;
-	}
-
-	function config_save($data)
-	{
-		foreach($data as $name => $value)
-			set_config($name, $value);
-		return True;
-	}
-
-	function instance_allow_multiple()
-	{
-		return False;
-	}
-
-	function hide_header()
-	{
-		return False;
-	}
-
-	function applicable_formats()
-	{
-		if( has_capability('moodle/site:config',
-			get_context_instance(CONTEXT_SYSTEM)))
-		{
-			return array('all' => true);
-		}
-		else
-		{
-			return array('all' => false);
-		}
-	}
-
-	# Pretty-prints exceptions
-	function ppExc($e)
-	{
-		$msg = '';
-		if(get_class($e) == "SoapFault")
-		{
-			$msg .= $e->faultstring;
-			$msg .= ": ";
-			$msg .= $e->detail;
-		}
-		else
-		{
-			$msg .= $e->getMessage();
-		}
-		return $msg;
-	}
-
-	function logError($errMsg)
-	{
-		$this->guiError = $errMsg;
-		$this->logMsg($errMsg);
-	}
-
-	function logMsg($msg = '')
-	{
-
-		if($this->logFileHandle)
-		{
-			fwrite($this->logFileHandle, strftime("%b %d %H:%M:%S", time()) .
-				" - " . $msg . "\n" );
-		}
-	}
-
-
-  function _self_test() {
-    return true;
-  }
+    private function log_error($error) {
+        $this->error = $error;
+    }
 }
