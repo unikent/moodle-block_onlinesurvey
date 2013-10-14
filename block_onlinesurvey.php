@@ -96,11 +96,16 @@ class block_onlinesurvey extends block_base {
 
                 $count = count($SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys);
                 if ($count) {
+                    // Kent change -- Support for CSS elements
+                    $list='';
                     foreach ($SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys as $surveykey) {
-                        $this->content->text .= "<a href=\"{$this->surveyurl}" . self::SURVEY_URL .
+                         $list .= "<li><a href=\"{$this->surveyurl}" . self::SURVEY_URL .
                                                 "{$surveykey->TransactionNumber}\" target=\"_blank\">".
-                                                "{$surveykey->CourseName}</a><br>";
+                                                "{$surveykey->CourseName}</a></li>";
                     }
+                    $instructions = get_string('survey_instructions', 'block_onlinesurvey');
+                    $this->content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
+                    // End change
                 }
             }
         }
@@ -217,4 +222,11 @@ class block_onlinesurvey extends block_base {
     private function log_error($error) {
         $this->error = $error;
     }
+
+    // Kent change -- Add support for CLI calling
+    function _self_test() {
+        return true;
+    }
+
+    // End change
 }
