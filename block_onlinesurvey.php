@@ -99,9 +99,14 @@ class block_onlinesurvey extends block_base {
                     // Kent change -- Support for CSS elements
                     $list='';
                     foreach ($SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys as $surveykey) {
-                         $list .= "<li><a href=\"{$this->surveyurl}" . self::SURVEY_URL .
+							$moduleCode = "";
+							if(isset($onlineSurveyKey->Instructor->LastName) && trim($onlineSurveyKey->Instructor->LastName) != ""){
+								$moduleCode = " (".trim($onlineSurveyKey->Instructor->LastName).")";
+							}
+                            $list .= "<li><a href=\"{$this->surveyurl}" . self::SURVEY_URL .
                                                 "{$surveykey->TransactionNumber}\" target=\"_blank\">".
-                                                "{$surveykey->CourseName}</a></li>";
+                                                $onlineSurveyKey->CourseName . $moduleCode .
+                                                "</a></li>";
                     }
                     $instructions = get_string('survey_instructions', 'block_onlinesurvey');
                     $this->content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
