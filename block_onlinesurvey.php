@@ -100,7 +100,7 @@ class block_onlinesurvey extends block_base {
                     $list='';
                     foreach ($SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys as $surveykey) {
 							$moduleCode = "";
-							if(isset($onlineSurveyKey->Instructor->LastName) && trim($onlineSurveyKey->Instructor->LastName) != ""){
+							if (!empty($onlineSurveyKey->Instructor->LastName)) {
 								$moduleCode = " (".trim($onlineSurveyKey->Instructor->LastName).")";
 							}
                             $list .= "<li><a href=\"{$this->surveyurl}" . self::SURVEY_URL .
