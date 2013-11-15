@@ -25,7 +25,7 @@ class block_onlinesurvey extends block_base {
 
         $this->title = get_string('pluginname', 'block_onlinesurvey');
 
-        if (isset($CFG)) {
+        if (isset($CFG->block_onlinesurvey_survey_server)) {
             // Block settings.
             $this->debugmode = $CFG->block_onlinesurvey_survey_debug == 1;
             $this->surveyurl = $CFG->block_onlinesurvey_survey_login;
