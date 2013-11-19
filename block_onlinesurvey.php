@@ -82,7 +82,7 @@ class block_onlinesurvey extends block_base {
                 return;
             }
 
-            $context = get_context_instance(CONTEXT_SYSTEM);
+            $context = context_system::instance();
             if (has_capability('moodle/site:config', $context)) {
                 if ($this->connectionok) {
                     $this->content->text = get_string('conn_works', 'block_onlinesurvey');
@@ -115,7 +115,7 @@ class block_onlinesurvey extends block_base {
             }
         }
 
-        $context = get_context_instance(CONTEXT_SYSTEM);
+        $context = context_system::instance();
         if (has_capability('moodle/site:config', $context)) {
             if ($this->debugmode && $this->error && !$this->connectionok) {
                 $this->content->text = "<b>An error has occured:</b><br />{$this->error}<br />" . $this->content->text;
@@ -202,7 +202,7 @@ class block_onlinesurvey extends block_base {
     }
 
     public function applicable_formats() {
-        $context = get_context_instance(CONTEXT_SYSTEM);
+        $context = context_system::instance();
         if (has_capability('moodle/site:config', $context)) {
             return array('all' => true);
         } else {
