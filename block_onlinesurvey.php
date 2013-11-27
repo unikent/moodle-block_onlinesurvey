@@ -127,6 +127,7 @@ class block_onlinesurvey extends block_base {
         if ($this->debugmode && $this->warning) {
             $this->content->text = "<b>Warning:</b><br />{$this->warning}<hr />" . $this->content->text;
         }
+        return $this->content;
     }
 
     private function get_surveys() {
