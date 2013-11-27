@@ -9,19 +9,20 @@ class onlinesurvey_soap_client extends SoapClient {
         $this->debugmode = $debug;
         $this->timeout = $timeout;
 
-        // Kent Change: Caching
+        // Kent Change: Caching. On error we wait 240 seconds before trying again
         $cache = cache::make('block_onlinesurvey', 'onlinesurvey');
         $uri = $cache->get('WSDLURI');
-        if ($uri === false) {
+        if ($uri === false || (is_array($uri) && $uri['error'] + 240 < time("now"))) {
         // End Kent Change
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $wsdl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
+            curl_setopt($ch, CURLOPT_TIMEOUT_MS, 500);
 
             $wsdlxml = curl_exec($ch);
             if (!$wsdlxml) {
+                $cache->set('WSDLURI', array("error" => time("now")));
                 throw new Exception('ERROR: Could not fetch WSDL');
             }
 
@@ -46,6 +47,10 @@ class onlinesurvey_soap_client extends SoapClient {
             $uri = "data:application/wsdl+xml;base64,$base64";
 
             $cache->set('WSDLURI', $uri);
+        }
+
+        if (is_array($uri)) {
+            throw new Exception('ERROR: Could not fetch WSDL');
         }
 
         parent::__construct($uri, $options);
