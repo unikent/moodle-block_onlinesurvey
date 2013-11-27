@@ -12,3 +12,7 @@ $string['onlinesurvey:addinstance'] = 'Add instance of the Evaluations (EvaSys) 
 $string['onlinesurvey:myaddinstance'] = 'Add instance of the Evaluations (EvaSys) block to my page';
 $string['copyright'] = '';
 $string['survey_instructions'] 	= 'Click on link below to complete evaluation';
+
+// Kent changes
+$string['cachedef_onlinesurvey'] = 'Caches the WSDL';
+$string['cachedef_onlinesurvey_session'] = 'Caches the user survey keys';

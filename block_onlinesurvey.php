@@ -75,11 +75,19 @@ class block_onlinesurvey extends block_base {
         if ($this->moodleuserid && $this->isconfigured) {
             $this->content->footer = '<hr />' . get_string('copyright', 'block_onlinesurvey');
 
-            if (!isset($SESSION->block_onlinesurvey_surveykeys) || $this->debugmode) {
-                $SESSION->block_onlinesurvey_surveykeys = $this->get_surveys();
+            /**
+             * Warning: Kent changes below:
+             * $SESSION->block_onlinesurvey_surveykeys moved to MUC session caching
+             */
+            $cache = cache::make('block_onlinesurvey', 'onlinesurvey_session');
+            $keys = $cache->get('surveykeys');
+
+            if ($keys === false || $this->debugmode) {
+                $keys = $this->get_surveys();
             }
 
-            if ($SESSION->block_onlinesurvey_surveykeys === false && !$this->debugmode) {
+            if ($keys === false && !$this->debugmode) {
+                $cache->set('surveykeys', $keys);
                 $this->content->text = get_string('no_surveys', 'block_onlinesurvey');
                 return;
             }
@@ -89,18 +97,19 @@ class block_onlinesurvey extends block_base {
                 if ($this->connectionok) {
                     $this->content->text = get_string('conn_works', 'block_onlinesurvey');
                 }
-            } else if (is_object($SESSION->block_onlinesurvey_surveykeys)) {
-                if (!is_array($SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys)) {
-                    $SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys = array(
-                        $SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys
+            }
+            elseif (is_object($keys)) {
+                if (!is_array($keys->OnlineSurveyKeys)) {
+                    $keys->OnlineSurveyKeys = array(
+                        $keys->OnlineSurveyKeys
                     );
                 }
 
-                $count = count($SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys);
+                $count = count($keys->OnlineSurveyKeys);
                 if ($count) {
                     // Kent change -- Support for CSS elements
                     $list='';
-                    foreach ($SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys as $surveykey) {
+                    foreach ($keys->OnlineSurveyKeys as $surveykey) {
 							$moduleCode = "";
 							if (!empty($surveykey->Instructor->LastName)) {
 								$moduleCode = " (".trim($surveykey->Instructor->LastName).")";
@@ -116,6 +125,8 @@ class block_onlinesurvey extends block_base {
                 }
             }
         }
+
+        $cache->set('surveykeys', $keys);
 
         $context = context_system::instance();
         if (has_capability('moodle/site:config', $context)) {
