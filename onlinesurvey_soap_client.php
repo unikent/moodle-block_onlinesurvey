@@ -9,36 +9,45 @@ class onlinesurvey_soap_client extends SoapClient {
         $this->debugmode = $debug;
         $this->timeout = $timeout;
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $wsdl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
+        // Kent Change: Caching
+        $cache = cache::make('block_onlinesurvey', 'onlinesurvey');
+        $uri = $cache->get('WSDLURI');
+        if ($uri === false) {
+        // End Kent Change
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $wsdl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
 
-        $wsdlxml = curl_exec($ch);
-        if (!$wsdlxml) {
-            throw new Exception('ERROR: Could not fetch WSDL');
+            $wsdlxml = curl_exec($ch);
+            if (!$wsdlxml) {
+                throw new Exception('ERROR: Could not fetch WSDL');
+            }
+
+            $url = parse_url($wsdl);
+            if (is_array($url)) {
+                $urlserveraddress = $url['host'];
+            }
+
+            preg_match('/<soap:address location="https*:\/\/([0-9a-z\.\-_]+)/i', $wsdlxml, $match);
+            if (count($match) == 2) {
+                $wsdlserveraddress = $match[1];
+            }
+
+            if ($urlserveraddress != $wsdlserveraddress AND $debug) {
+                $this->haswarning = true;
+                $this->warnmessage = "WSDL endpoint setting might not be correct.
+                        URL: $urlserveraddress,
+                        Endpoint address: $wsdlserveraddress.";
+            }
+
+            $base64 = base64_encode($wsdlxml);
+            $uri = "data:application/wsdl+xml;base64,$base64";
+
+            $cache->set('WSDLURI', $uri);
         }
 
-        $url = parse_url($wsdl);
-        if (is_array($url)) {
-            $urlserveraddress = $url['host'];
-        }
-
-        preg_match('/<soap:address location="https*:\/\/([0-9a-z\.\-_]+)/i', $wsdlxml, $match);
-        if (count($match) == 2) {
-            $wsdlserveraddress = $match[1];
-        }
-
-        if ($urlserveraddress != $wsdlserveraddress AND $debug) {
-            $this->haswarning = true;
-            $this->warnmessage = "WSDL endpoint setting might not be correct.
-                    URL: $urlserveraddress,
-                    Endpoint address: $wsdlserveraddress.";
-        }
-
-        $base64 = base64_encode($wsdlxml);
-        $uri = "data:application/wsdl+xml;base64,$base64";
         parent::__construct($uri, $options);
     }
 
