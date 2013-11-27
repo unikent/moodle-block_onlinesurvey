@@ -12,7 +12,7 @@ class onlinesurvey_soap_client extends SoapClient {
         // Kent Change: Caching. On error we wait 240 seconds before trying again
         $cache = cache::make('block_onlinesurvey', 'onlinesurvey');
         $uri = $cache->get('WSDLURI');
-        if ($uri === false || (is_array($uri) && $uri['error'] + 2 < time("now"))) {
+        if ($uri === false || (is_array($uri) && $uri['error'] + 240 < time("now"))) {
         // End Kent Change
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $wsdl);
