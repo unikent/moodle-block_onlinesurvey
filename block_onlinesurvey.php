@@ -69,8 +69,10 @@ class block_onlinesurvey extends block_base {
             return $this->content;
         }
 
+        $this->content = new stdClass();
+        $this->content->text = '';
+
         if ($this->moodleuserid && $this->isconfigured) {
-            $this->content = new stdClass();
             $this->content->footer = '<hr />' . get_string('copyright', 'block_onlinesurvey');
 
             if (!isset($SESSION->block_onlinesurvey_surveykeys) || $this->debugmode) {
