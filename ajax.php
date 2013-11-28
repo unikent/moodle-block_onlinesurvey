@@ -117,11 +117,11 @@ class ajax {
             // Do we have a cache?
             if ($keys === false || $this->debugmode) {
                 $keys = $this->get_surveys();
+                $cache->set('surveykeys', $keys);
             }
 
             // No keys, set cache and let the user know.
             if ($keys === false && !$this->debugmode) {
-                $cache->set('surveykeys', $keys);
                 $this->content->text = get_string('no_surveys', 'block_onlinesurvey');
                 return;
             }
@@ -157,9 +157,6 @@ class ajax {
                     // End change
                 }
             }
-
-            // Set the cache
-            $cache->set('surveykeys', $keys);
         }
 
         if ($this->debugmode) {
