@@ -114,7 +114,7 @@ class ajax {
                 return;
             }
 
-            $context = get_context_instance(CONTEXT_SYSTEM);
+            $context = context_system::instance();
             if (has_capability('moodle/site:config', $context)) {
                 if ($this->connectionok) {
                     $this->content->text = get_string('conn_works', 'block_onlinesurvey');
@@ -147,7 +147,7 @@ class ajax {
             }
         }
 
-        $context = get_context_instance(CONTEXT_SYSTEM);
+        $context = context_system::instance();
         if (has_capability('moodle/site:config', $context)) {
             if ($this->debugmode && $this->error && !$this->connectionok) {
                 $this->content->text = "<b>An error has occured:</b><br />{$this->error}<br />" . $this->content->text;
@@ -236,7 +236,7 @@ class ajax {
     }
 
     public function applicable_formats() {
-        $context = get_context_instance(CONTEXT_SYSTEM);
+        $context = context_system::instance();
         if (has_capability('moodle/site:config', $context)) {
             return array('all' => true);
         } else {
@@ -262,11 +262,6 @@ class ajax {
         $this->error = $error;
     }
 
-    // Kent change -- Add support for CLI calling
-    function _self_test() {
-        return true;
-    }
-
     // End change
 }
 
@@ -278,6 +273,5 @@ $ajax->init();
 $content = $ajax->get_content();
 $content =$ajax->content;
 echo json_encode(array(footer=> $content->footer, text=>$content->text));
-//var_dump($content);
-//var_dump($ajax);
+
 
