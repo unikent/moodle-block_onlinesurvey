@@ -6,12 +6,20 @@ class block_onlinesurvey extends block_base {
         $this->title = get_string('pluginname', 'block_onlinesurvey');
     }
 
+    /**
+     * Required JS
+     */
+    public function get_required_javascript() {
+        parent::get_required_javascript();
+
+        // Include our custom JS
+        $this->page->requires->js('/blocks/onlinesurvey/js/onlinesurvey.js');
+    }
+
     public function get_content() {
-        global $PAGE;
         $this->content = new stdClass();
         $this->content->text = '<div id="onlinesurvey-text">Requesting surveys</div>';
         $this->content->footer = '<div id="onlinesurvey-footer"></div>';
-        $PAGE->requires->js('/blocks/onlinesurvey/js/onlinesurvey.js');
         return $this->content;
     }
 

@@ -141,16 +141,16 @@ class ajax {
                 $count = count($keys->OnlineSurveyKeys);
                 if ($count) {
                     // Kent change -- Support for CSS elements
-                    $list='';
+                    $list = '';
                     foreach ($keys->OnlineSurveyKeys as $surveykey) {
-							$moduleCode = "";
-							if (!empty($surveykey->Instructor->LastName)) {
-								$moduleCode = " (".trim($surveykey->Instructor->LastName).")";
-							}
-                            $list .= "<li><a href=\"{$this->surveyurl}" . self::SURVEY_URL .
-                                                "{$surveykey->TransactionNumber}\" target=\"_blank\">".
-                                                $surveykey->CourseName . $moduleCode .
-                                                "</a></li>";
+                        $moduleCode = "";
+                        if (!empty($surveykey->Instructor->LastName)) {
+                            $moduleCode = " (".trim($surveykey->Instructor->LastName).")";
+                        }
+                        $list .= "<li><a href=\"{$this->surveyurl}" . self::SURVEY_URL .
+                                 "{$surveykey->TransactionNumber}\" target=\"_blank\">".
+                                 $surveykey->CourseName . $moduleCode .
+                                 "</a></li>";
                     }
                     $instructions = get_string('survey_instructions', 'block_onlinesurvey');
                     $this->content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
