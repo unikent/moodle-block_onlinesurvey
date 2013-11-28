@@ -47,43 +47,33 @@ class onlinesurvey_ajax {
     public function __construct() {
         global $CFG;
 
-        $this->title = get_string('pluginname', 'block_onlinesurvey');
+        // Block settings.
+        $this->debugmode = $CFG->block_onlinesurvey_survey_debug == 1;
+        $this->surveyurl = $CFG->block_onlinesurvey_survey_login;
+        $this->wsdl = $CFG->block_onlinesurvey_survey_server;
+        $this->soapuser = $CFG->block_onlinesurvey_survey_user;
+        $this->soappassword = $CFG->block_onlinesurvey_survey_pwd;
+        $this->timeout = 1;
 
-        if (isset($CFG)) {
-            // Block settings.
-            $this->debugmode = $CFG->block_onlinesurvey_survey_debug == 1;
-            $this->surveyurl = $CFG->block_onlinesurvey_survey_login;
-            $this->wsdl = $CFG->block_onlinesurvey_survey_server;
-            $this->soapuser = $CFG->block_onlinesurvey_survey_user;
-            $this->soappassword = $CFG->block_onlinesurvey_survey_pwd;
-            $this->timeout = $CFG->block_onlinesurvey_survey_timeout;
-            if (!$this->timeout) {
-                $this->timeout = 3;
-            }
+        // Session information.
+        global $USER;
+        if ($this->moodleuserid = $USER->id) {
+            $this->moodleusername = $USER->username;
+            $this->moodleemail = $USER->email;
 
-            // Session information.
-            global $USER;
-            if ($this->moodleuserid = $USER->id) {
-                $this->moodleusername = $USER->username;
-                $this->moodleemail = $USER->email;
+            // Parse wsdlnamespace from the wsdl url.
+            preg_match('/\/([^\/]+\.wsdl)$/', $this->wsdl, $matches);
 
-                // Parse wsdlnamespace from the wsdl url.
-                preg_match('/\/([^\/]+\.wsdl)$/', $this->wsdl, $matches);
-
-                if (count($matches) == 2) {
-                    $this->wsdlnamespace = $matches[1];
-                    $this->isconfigured = true;
-                } else {
-                    $this->isconfigured = false;
-                    $this->handle_error("WSDL namespace parse error");
-                }
+            if (count($matches) == 2) {
+                $this->wsdlnamespace = $matches[1];
+                $this->isconfigured = true;
             } else {
                 $this->isconfigured = false;
-                $this->handle_error("User ID not found");
+                $this->handle_error("WSDL namespace parse error");
             }
         } else {
-            $this->handle_error("Configuration not accessible");
             $this->isconfigured = false;
+            $this->handle_error("User ID not found");
         }
     }
 
@@ -192,7 +182,7 @@ class onlinesurvey_ajax {
                 return false;
             }
 
-            $this->client=$client;
+            $this->client = $client;
             $this->connectionok = true;
             return $client->GetPswdsByParticipant($this->moodleemail);
         } catch (Exception $e) {
@@ -205,46 +195,14 @@ class onlinesurvey_ajax {
         if (is_array($err)) {
             // Configuration validation error.
             if (!$err[0]) {
-                $this->log_error($err[1]);
+            	$this->error = $err[1];
             }
         } else if (is_string($err)) {
             // Simple error message.
-            $this->log_error($err);
+            $this->error = $err;
         } else {
             // Error should be an exception.
-            $this->log_error($this->pretty_print_exceptions($err));
-        }
-    }
-
-    public function has_config() {
-        return true;
-    }
-
-    public function config_save($data) {
-        foreach ($data as $name => $value) {
-            set_config($name, $value);
-        }
-
-        return true;
-    }
-
-    public function instance_allow_multiple() {
-        return false;
-    }
-
-    public function hide_header() {
-        return false;
-    }
-
-    public function applicable_formats() {
-        $context = context_system::instance();
-        if (has_capability('moodle/site:config', $context)) {
-            return array('all' => true);
-        } else {
-            return array(
-                'all' => false,
-                'admin' => true
-            );
+            $this->error = $this->pretty_print_exceptions($err);
         }
     }
 
@@ -258,10 +216,4 @@ class onlinesurvey_ajax {
 
         return $msg;
     }
-
-    private function log_error($error) {
-        $this->error = $error;
-    }
-
-    // End change
 }
