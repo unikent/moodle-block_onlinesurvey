@@ -162,17 +162,13 @@ class ajax {
             $cache->set('surveykeys', $keys);
         }
 
-        $context = context_system::instance();
-        if (has_capability('moodle/site:config', $context)) {
-            if ($this->debugmode && $this->error && !$this->connectionok) {
+        if ($this->debugmode) {
+            if ($this->error) {
                 $this->content->text = "<b>An error has occured:</b><br />{$this->error}<br />" . $this->content->text;
             }
-        } else if ($this->debugmode && $this->error) {
-            $this->content->text = "<b>An error has occured:</b><br />{$this->error}<br />" . $this->content->text;
-        }
-
-        if ($this->debugmode && $this->warning) {
-            $this->content->text = "<b>Warning:</b><br />{$this->warning}<hr />" . $this->content->text;
+            elseif ($this->warning) {
+                $this->content->text = "<b>Warning:</b><br />{$this->warning}<hr />" . $this->content->text;
+            }
         }
 
         return $this->content;
