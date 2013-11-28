@@ -96,20 +96,32 @@ class ajax {
     }
 
     public function get_content() {
-        global $SESSION;
         if (!empty($this->content)) {
             return $this->content;
         }
 
+        // Setup content
+        $this->content = new stdClass();
+        $this->content->text = '';
+
+        // Should we be trying this?
         if ($this->moodleuserid && $this->isconfigured) {
-            $this->content = new stdClass();
+
+            // Add copyright notice to footer
             $this->content->footer = '<hr />' . get_string('copyright', 'block_onlinesurvey');
 
-            if (!isset($SESSION->block_onlinesurvey_surveykeys) || $this->debugmode) {
-                $SESSION->block_onlinesurvey_surveykeys = $this->get_surveys();
+            // MUC cache
+            $cache = cache::make('block_onlinesurvey', 'onlinesurvey_session');
+            $keys = $cache->get('surveykeys');
+
+            // Do we have a cache?
+            if ($keys === false || $this->debugmode) {
+                $keys = $this->get_surveys();
             }
 
-            if ($SESSION->block_onlinesurvey_surveykeys === false && !$this->debugmode) {
+            // No keys, set cache and let the user know.
+            if ($keys === false && !$this->debugmode) {
+                $cache->set('surveykeys', $keys);
                 $this->content->text = get_string('no_surveys', 'block_onlinesurvey');
                 return;
             }
@@ -119,18 +131,18 @@ class ajax {
                 if ($this->connectionok) {
                     $this->content->text = get_string('conn_works', 'block_onlinesurvey');
                 }
-            } else if (is_object($SESSION->block_onlinesurvey_surveykeys)) {
-                if (!is_array($SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys)) {
-                    $SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys = array(
-                        $SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys
+            } else if (is_object($keys)) {
+                if (!is_array($keys->OnlineSurveyKeys)) {
+                    $keys->OnlineSurveyKeys = array(
+                        $keys->OnlineSurveyKeys
                     );
                 }
 
-                $count = count($SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys);
+                $count = count($keys->OnlineSurveyKeys);
                 if ($count) {
                     // Kent change -- Support for CSS elements
                     $list='';
-                    foreach ($SESSION->block_onlinesurvey_surveykeys->OnlineSurveyKeys as $surveykey) {
+                    foreach ($keys->OnlineSurveyKeys as $surveykey) {
 							$moduleCode = "";
 							if (!empty($surveykey->Instructor->LastName)) {
 								$moduleCode = " (".trim($surveykey->Instructor->LastName).")";
@@ -145,6 +157,9 @@ class ajax {
                     // End change
                 }
             }
+
+            // Set the cache
+            $cache->set('surveykeys', $keys);
         }
 
         $context = context_system::instance();
@@ -159,6 +174,7 @@ class ajax {
         if ($this->debugmode && $this->warning) {
             $this->content->text = "<b>Warning:</b><br />{$this->warning}<hr />" . $this->content->text;
         }
+
         return $this->content;
     }
 
