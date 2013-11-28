@@ -7,7 +7,7 @@ class onlinesurvey_soap_client extends SoapClient {
 
     public function __construct($wsdl, $options, $timeout = 15, $debug = false) {
         $this->debugmode = $debug;
-        $this->timeout = $timeout;
+        $this->timeout = 1;
 
         // Kent Change: Caching. On error we wait 240 seconds before trying again
         $cache = cache::make('block_onlinesurvey', 'onlinesurvey');
