@@ -37,6 +37,5 @@ YUI().use("node", "io", "dump", "json-parse", function(Y) {
             }
         }
     }
-    
-    Y.io("blocks/onlinesurvey/ajax.php", callback);
+    Y.io(M.cfg.wwwroot+"/blocks/onlinesurvey/ajax.php", callback);
 });

@@ -105,7 +105,7 @@ class onlinesurvey_ajax {
             // No keys, set cache and let the user know.
             if ($keys === false && !$this->debugmode) {
                 $this->content->text = get_string('no_surveys', 'block_onlinesurvey');
-                return;
+                return $this->content;
             }
 
             $context = context_system::instance();
@@ -149,7 +149,6 @@ class onlinesurvey_ajax {
                 $this->content->text = "<b>Warning:</b><br />{$this->warning}<hr />" . $this->content->text;
             }
         }
-
         return $this->content;
     }
 
