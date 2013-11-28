@@ -30,6 +30,7 @@ define('AJAX_SCRIPT', true);
 /** Include config */
 require_once(dirname(__FILE__) . '/../../config.php');
 
+require_sesskey();
 
 class ajax {
     const SURVEY_URL = 'indexstud.php?type=html&user_tan=';
@@ -274,11 +275,10 @@ class ajax {
     // End change
 }
 
-require_sesskey();
-
-echo $OUTPUT->header(); // send headers
 $ajax = new ajax();
 $ajax->init();
 $content = $ajax->get_content();
-$content =$ajax->content;
-echo json_encode(array(footer=> $content->footer, text=>$content->text));
+echo json_encode(array(
+    "footer" => $content->footer,
+    "text" => $content->text
+));
