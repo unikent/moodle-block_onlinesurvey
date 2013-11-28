@@ -10,11 +10,11 @@ class block_onlinesurvey extends block_base {
     }
 
     public function get_content() {
-        global $CFG;
+        global $PAGE;
         $this->content = new stdClass();
         $this->content->text="<div id='onlinesurvey-text'>Requesting surveys</div>";
         $this->content->footer="<div id='onlinesurvey-footer'></div>";
-        $this->content->text .= '<script src="'.$CFG->wwwroot.'/blocks/onlinesurvey/js/onlinesurvey.js" type="text/javascript"></script>';
+        $PAGE->requires->js('/blocks/onlinesurvey/js/onlinesurvey.js');
         return $this->content;
     }
 
