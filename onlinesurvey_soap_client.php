@@ -71,7 +71,7 @@ class onlinesurvey_soap_client extends SoapClient {
         curl_setopt($ch, CURLOPT_POSTFIELDS, $request);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 200);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
         // Execute post.
