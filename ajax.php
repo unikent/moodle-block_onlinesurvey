@@ -277,10 +277,8 @@ class ajax {
 require_sesskey();
 
 echo $OUTPUT->header(); // send headers
-$ajax=new ajax();
+$ajax = new ajax();
 $ajax->init();
 $content = $ajax->get_content();
 $content =$ajax->content;
 echo json_encode(array(footer=> $content->footer, text=>$content->text));
-
-

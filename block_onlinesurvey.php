@@ -1,6 +1,8 @@
 <?php
+/**
+ * An online survey block
+ */
 class block_onlinesurvey extends block_base {
-    const SURVEY_URL = 'indexstud.php?type=html&user_tan=';
 
     public function init() {
         $this->title = get_string('pluginname', 'block_onlinesurvey');
@@ -16,6 +18,13 @@ class block_onlinesurvey extends block_base {
         $this->page->requires->js('/blocks/onlinesurvey/js/onlinesurvey.js');
     }
 
+    /**
+     * Parent class version of this function simply returns NULL
+     * This should be implemented by the derived class to return
+     * the content object.
+     *
+     * @return stdObject
+     */
     public function get_content() {
         $this->content = new stdClass();
         $this->content->text = '<div id="onlinesurvey-text">Requesting surveys</div>';
@@ -23,41 +32,44 @@ class block_onlinesurvey extends block_base {
         return $this->content;
     }
 
-    private function handle_error($err) {
-        if (is_array($err)) {
-            // Configuration validation error.
-            if (!$err[0]) {
-                $this->error = $err[1];
-            }
-        } else if (is_string($err)) {
-            // Simple error message.
-            $this->error = $err;
-        } else {
-            // Error should be an exception.
-            $this->error = $this->pretty_print_exceptions($err);
-        }
-    }
-
+    /**
+     * Subclasses should override this and return true if the
+     * subclass block has a settings.php file.
+     *
+     * @return boolean
+     */
     public function has_config() {
         return true;
     }
 
-    public function config_save($data) {
-        foreach ($data as $name => $value) {
-            set_config($name, $value);
-        }
-
-        return true;
-    }
-
+    /**
+     * Are you going to allow multiple instances of each block?
+     * If yes, then it is assumed that the block WILL USE per-instance configuration
+     * @return boolean
+     */
     public function instance_allow_multiple() {
         return false;
     }
 
+    /**
+     * Default return is false - header will be shown
+     * @return boolean
+     */
     public function hide_header() {
         return false;
     }
 
+    /**
+     * Which page types this block may appear on.
+     *
+     * The information returned here is processed by the
+     * {@link blocks_name_allowed_in_format()} function. Look there if you need
+     * to know exactly how this works.
+     *
+     * Default case: everything except mod and tag.
+     *
+     * @return array page-type prefix => true/false.
+     */
     public function applicable_formats() {
         $context = context_system::instance();
         if (has_capability('moodle/site:config', $context)) {
@@ -69,22 +81,4 @@ class block_onlinesurvey extends block_base {
             );
         }
     }
-
-    private function pretty_print_exceptions($e) {
-        $msg = '';
-        if (get_class($e) == "SoapFault") {
-            $msg = "{$e->faultstring}: {$e->detail}";
-        } else {
-            $msg = $e->getMessage();
-        }
-
-        return $msg;
-    }
-
-    // Kent change -- Add support for CLI calling
-    function _self_test() {
-        return true;
-    }
-
-    // End change
 }
