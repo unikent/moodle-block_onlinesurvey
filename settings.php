@@ -44,7 +44,7 @@ if ($ADMIN->fulltree) {
             'block_onlinesurvey_survey_timeout',
             get_string('survey_timeout', 'block_onlinesurvey'),
             '',
-            3,
+            3000,
             PARAM_INT
         )
     );
