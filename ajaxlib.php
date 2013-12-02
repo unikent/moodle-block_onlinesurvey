@@ -78,19 +78,15 @@ class onlinesurvey_ajax {
     }
 
     public function get_content() {
-        if (!empty($this->content)) {
-            return $this->content;
-        }
-
         // Setup content
-        $this->content = new stdClass();
-        $this->content->text = '';
+        $content = new stdClass();
+        $content->text = '';
 
         // Should we be trying this?
         if ($this->moodleuserid && $this->isconfigured) {
 
             // Add copyright notice to footer
-            $this->content->footer = '<hr />' . get_string('copyright', 'block_onlinesurvey');
+            $content->footer = '<hr />' . get_string('copyright', 'block_onlinesurvey');
 
             // MUC cache
             $cache = cache::make('block_onlinesurvey', 'onlinesurvey_session');
@@ -104,14 +100,14 @@ class onlinesurvey_ajax {
 
             // No keys, set cache and let the user know.
             if ($keys === false && !$this->debugmode) {
-                $this->content->text = get_string('no_surveys', 'block_onlinesurvey');
-                return $this->content;
+                $content->text = get_string('no_surveys', 'block_onlinesurvey');
+                return $content;
             }
 
             $context = context_system::instance();
             if (has_capability('moodle/site:config', $context)) {
                 if ($this->connectionok) {
-                    $this->content->text = get_string('conn_works', 'block_onlinesurvey');
+                    $content->text = get_string('conn_works', 'block_onlinesurvey');
                 }
             } else if (is_object($keys)) {
                 if (!is_array($keys->OnlineSurveyKeys)) {
@@ -134,20 +130,20 @@ class onlinesurvey_ajax {
                                  "</a></li>";
                     }
                     $instructions = get_string('survey_instructions', 'block_onlinesurvey');
-                    $this->content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
+                    $content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
                 }
             }
         }
 
         if ($this->debugmode) {
             if ($this->error) {
-                $this->content->text = "<b>An error has occured:</b><br />{$this->error}<br />" . $this->content->text;
+                $content->text = "<b>An error has occured:</b><br />{$this->error}<br />" . $content->text;
             }
             elseif ($this->warning) {
-                $this->content->text = "<b>Warning:</b><br />{$this->warning}<hr />" . $this->content->text;
+                $content->text = "<b>Warning:</b><br />{$this->warning}<hr />" . $content->text;
             }
         }
-        return $this->content;
+        return $content;
     }
 
     private function get_surveys() {
