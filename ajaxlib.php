@@ -104,12 +104,7 @@ class onlinesurvey_ajax {
                 return $content;
             }
 
-            $context = context_system::instance();
-            if (has_capability('moodle/site:config', $context)) {
-                if ($this->connectionok) {
-                    $content->text = get_string('conn_works', 'block_onlinesurvey');
-                }
-            } else if (is_object($keys)) {
+            if (is_object($keys)) {
                 if (!is_array($keys->OnlineSurveyKeys)) {
                     $keys->OnlineSurveyKeys = array(
                         $keys->OnlineSurveyKeys
@@ -132,10 +127,14 @@ class onlinesurvey_ajax {
                     $instructions = get_string('survey_instructions', 'block_onlinesurvey');
                     $content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
                 }
+            } elseif (has_capability('moodle/site:config', context_system::instance())) {
+                if ($this->connectionok) {
+                    $content->text = get_string('conn_works', 'block_onlinesurvey');
+                }
             }
         }
 
-        if ($this->debugmode) {
+        if ($this->debugmode && has_capability('moodle/site:config', context_system::instance())) {
             if ($this->error) {
                 $content->text = "<b>An error has occured:</b><br />{$this->error}<br />" . $content->text;
             }
@@ -143,6 +142,7 @@ class onlinesurvey_ajax {
                 $content->text = "<b>Warning:</b><br />{$this->warning}<hr />" . $content->text;
             }
         }
+        
         return $content;
     }
 
