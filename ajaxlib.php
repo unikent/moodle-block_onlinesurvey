@@ -53,7 +53,7 @@ class onlinesurvey_ajax {
         $this->wsdl = $CFG->block_onlinesurvey_survey_server;
         $this->soapuser = $CFG->block_onlinesurvey_survey_user;
         $this->soappassword = $CFG->block_onlinesurvey_survey_pwd;
-        $this->timeout = 1;
+        $this->timeout = $CFG->block_onlinesurvey_survey_timeout;
 
         // Session information.
         global $USER;
@@ -122,7 +122,6 @@ class onlinesurvey_ajax {
 
                 $count = count($keys->OnlineSurveyKeys);
                 if ($count) {
-                    // Kent change -- Support for CSS elements
                     $list = '';
                     foreach ($keys->OnlineSurveyKeys as $surveykey) {
                         $moduleCode = "";
@@ -136,7 +135,6 @@ class onlinesurvey_ajax {
                     }
                     $instructions = get_string('survey_instructions', 'block_onlinesurvey');
                     $this->content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
-                    // End change
                 }
             }
         }
@@ -156,11 +154,12 @@ class onlinesurvey_ajax {
         try {
             require_once('onlinesurvey_soap_client.php');
             $client = new onlinesurvey_soap_client( $this->wsdl,
-                array(
-                    'trace' => 1,
+                array (
+                    'trace' => $this->debugmode ? 1 : 0,
                     'feature' => SOAP_SINGLE_ELEMENT_ARRAYS,
-                    'connection_timeout' => $this->timeout),
-                $this->timeout,
+                    'connection_timeout' => max(1, round($this->timeout / 1000)),
+                    'cache_wsdl' => $this->debugmode ? WSDL_CACHE_NONE : WSDL_CACHE_MEMORY
+                ),
                 $this->debugmode
             );
 

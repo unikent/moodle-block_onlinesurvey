@@ -1,24 +1,22 @@
 <?php
 class onlinesurvey_soap_client extends SoapClient {
-    public $timeout;
     public $debugmode;
     public $haswarning = false;
     public $warnmessage = "";
 
-    public function __construct($wsdl, $options, $timeout = 15, $debug = false) {
-        $this->debugmode = $debug;
-        $this->timeout = 1;
+    public function __construct($wsdl, $options, $debug = false) {
+        global $CFG;
 
-        // Kent Change: Caching. On error we wait 240 seconds before trying again
+        $this->debugmode = $debug;
+
         $cache = cache::make('block_onlinesurvey', 'onlinesurvey');
         $uri = $cache->get('WSDLURI');
         if ($uri === false || (is_array($uri) && $uri['error'] + 240 < time("now"))) {
-        // End Kent Change
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $wsdl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT_MS, 200);
+            curl_setopt($ch, CURLOPT_TIMEOUT_MS, $CFG->block_onlinesurvey_survey_timeout);
 
             $wsdlxml = curl_exec($ch);
             if (!$wsdlxml) {
@@ -57,6 +55,8 @@ class onlinesurvey_soap_client extends SoapClient {
     }
 
     public function __doRequest($request, $location, $action, $version, $one_way = 0) {
+        global $CFG;
+
         $headers = array(
             'Content-Type: text/xml;charset=UTF-8',
             "SOAPAction: \"$action\"",
@@ -71,7 +71,7 @@ class onlinesurvey_soap_client extends SoapClient {
         curl_setopt($ch, CURLOPT_POSTFIELDS, $request);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 200);
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, $CFG->block_onlinesurvey_survey_timeout);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
         // Execute post.
