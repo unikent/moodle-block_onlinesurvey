@@ -46,6 +46,8 @@ class onlinesurvey_ajax {
 
     public function __construct() {
         global $CFG;
+        
+        $this->connectionok = false;
 
         // Block settings.
         $this->debugmode = $CFG->block_onlinesurvey_survey_debug == 1;
@@ -127,22 +129,19 @@ class onlinesurvey_ajax {
                     $instructions = get_string('survey_instructions', 'block_onlinesurvey');
                     $content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
                 }
-            } elseif (has_capability('moodle/site:config', context_system::instance())) {
-                if ($this->connectionok) {
-                    $content->text = get_string('conn_works', 'block_onlinesurvey');
-                }
             }
         }
 
         if ($this->debugmode && has_capability('moodle/site:config', context_system::instance())) {
             if ($this->error) {
                 $content->text = "<b>An error has occured:</b><br />{$this->error}<br />" . $content->text;
-            }
-            elseif ($this->warning) {
+            } elseif ($this->warning) {
                 $content->text = "<b>Warning:</b><br />{$this->warning}<hr />" . $content->text;
+            } elseif ($this->connectionok) {
+                $content->text = get_string('conn_works', 'block_onlinesurvey');
             }
         }
-        
+
         return $content;
     }
 
