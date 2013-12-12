@@ -91,13 +91,13 @@ class onlinesurvey_ajax {
             $content->footer = '<hr />' . get_string('copyright', 'block_onlinesurvey');
 
             // MUC cache
-            $cache = cache::make('block_onlinesurvey', 'onlinesurvey_session');
-            $keys = $cache->get('surveykeys');
+            //$cache = cache::make('block_onlinesurvey', 'onlinesurvey_session');
+            //$keys = $cache->get('surveykeys');
 
             // Do we have a cache?
             if ($keys === false || $this->debugmode) {
                 $keys = $this->get_surveys();
-                $cache->set('surveykeys', $keys);
+                //$cache->set('surveykeys', $keys);
             }
 
             // No keys, set cache and let the user know.
