@@ -95,10 +95,10 @@ class onlinesurvey_ajax {
             //$keys = $cache->get('surveykeys');
 
             // Do we have a cache?
-            if ($keys === false || $this->debugmode) {
+            //if ($keys === false || $this->debugmode) {
                 $keys = $this->get_surveys();
                 //$cache->set('surveykeys', $keys);
-            }
+            //}
 
             // No keys, set cache and let the user know.
             if ($keys === false && !$this->debugmode) {
