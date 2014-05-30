@@ -135,8 +135,7 @@ class onlinesurvey_ajax {
 
     private function get_surveys() {
         try {
-            require_once('onlinesurvey_soap_client.php');
-            $client = new onlinesurvey_soap_client( $this->wsdl,
+            $client = new \block_onlinesurvey\onlinesurvey_soap_client( $this->wsdl,
                 array (
                     'trace' => $this->debugmode ? 1 : 0,
                     'feature' => SOAP_SINGLE_ELEMENT_ARRAYS,
