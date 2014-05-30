@@ -7,8 +7,10 @@ YUI().use("node", "io", "dump", "json-parse", function(Y) {
     var callback = {
 
         timeout : 3000,
-        method:"GET",
-        data:{sesskey:M.cfg.sesskey},
+        method : "GET",
+        data : {
+            sesskey : M.cfg.sesskey
+        },
 
         on : {
             success : function (x,o) {
