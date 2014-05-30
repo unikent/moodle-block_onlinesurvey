@@ -14,11 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Block for online surveys
- *
- * @package    block_onlinesurvey
- */
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Online Survey AJAX class
@@ -46,7 +42,7 @@ class onlinesurvey_ajax {
 
     public function __construct() {
         global $CFG;
-        
+
         $this->connectionok = false;
 
         // Block settings.
@@ -80,25 +76,17 @@ class onlinesurvey_ajax {
     }
 
     public function get_content() {
-        // Setup content
+        // Setup content.
         $content = new stdClass();
         $content->text = '';
 
         // Should we be trying this?
         if ($this->moodleuserid && $this->isconfigured) {
 
-            // Add copyright notice to footer
+            // Add copyright notice to footer.
             $content->footer = '<hr />' . get_string('copyright', 'block_onlinesurvey');
 
-            // MUC cache
-            //$cache = cache::make('block_onlinesurvey', 'onlinesurvey_session');
-            //$keys = $cache->get('surveykeys');
-
-            // Do we have a cache?
-            //if ($keys === false || $this->debugmode) {
-                $keys = $this->get_surveys();
-                //$cache->set('surveykeys', $keys);
-            //}
+            $keys = $this->get_surveys();
 
             // No keys, set cache and let the user know.
             if ($keys === false && !$this->debugmode) {
@@ -117,13 +105,13 @@ class onlinesurvey_ajax {
                 if ($count) {
                     $list = '';
                     foreach ($keys->OnlineSurveyKeys as $surveykey) {
-                        $moduleCode = "";
+                        $modulecode = "";
                         if (!empty($surveykey->Instructor->LastName)) {
-                            $moduleCode = " (".trim($surveykey->Instructor->LastName).")";
+                            $modulecode = " (".trim($surveykey->Instructor->LastName).")";
                         }
                         $list .= "<li><a href=\"{$this->surveyurl}" . self::SURVEY_URL .
                                  "{$surveykey->TransactionNumber}\" target=\"_blank\">".
-                                 $surveykey->CourseName . $moduleCode .
+                                 $surveykey->CourseName . $modulecode .
                                  "</a></li>";
                     }
                     $instructions = get_string('survey_instructions', 'block_onlinesurvey');
@@ -135,9 +123,9 @@ class onlinesurvey_ajax {
         if ($this->debugmode && has_capability('moodle/site:config', context_system::instance())) {
             if ($this->error) {
                 $content->text = "<b>An error has occured:</b><br />{$this->error}<br />" . $content->text;
-            } elseif ($this->warning) {
+            } else if ($this->warning) {
                 $content->text = "<b>Warning:</b><br />{$this->warning}<hr />" . $content->text;
-            } elseif ($this->connectionok) {
+            } else if ($this->connectionok) {
                 $content->text = get_string('conn_works', 'block_onlinesurvey');
             }
         }
@@ -188,7 +176,7 @@ class onlinesurvey_ajax {
         if (is_array($err)) {
             // Configuration validation error.
             if (!$err[0]) {
-            	$this->error = $err[1];
+                $this->error = $err[1];
             }
         } else if (is_string($err)) {
             // Simple error message.
