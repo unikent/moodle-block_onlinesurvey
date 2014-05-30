@@ -19,7 +19,11 @@ define('AJAX_SCRIPT', true);
 require_once(dirname(__FILE__) . '/../../config.php');
 require_once(dirname(__FILE__) . '/ajaxlib.php');
 
+require_login();
 require_sesskey();
+
+$PAGE->set_url('/blocks/onlinesurvey/ajax.php');
+$PAGE->set_context(context_system::instance());
 
 $ajax = new onlinesurvey_ajax();
 $content = $ajax->get_content();
