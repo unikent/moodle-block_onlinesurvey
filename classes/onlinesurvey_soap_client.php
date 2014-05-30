@@ -1,15 +1,49 @@
 <?php
-class onlinesurvey_soap_client extends SoapClient {
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Evasys Block
+ *
+ * @package    block_onlinesurvey
+ * @copyright  2014 Skylar Kelty <S.Kelty@kent.ac.uk>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+namespace block_onlinesurvey;
+
+defined('MOODLE_INTERNAL') || die();
+
+/**
+ * Evasys SOAP client
+ */
+class onlinesurvey_soap_client extends \SoapClient
+{
     public $debugmode;
     public $haswarning = false;
     public $warnmessage = "";
 
+    /**
+     * Construct the SOAP Client
+     */
     public function __construct($wsdl, $options, $debug = false) {
         global $CFG;
 
         $this->debugmode = $debug;
 
-        $cache = cache::make('block_onlinesurvey', 'onlinesurvey');
+        $cache = \cache::make('block_onlinesurvey', 'onlinesurvey');
         $uri = $cache->get('WSDLURI');
         if ($uri === false || (is_array($uri) && $uri['error'] + 240 < time("now"))) {
             $ch = curl_init();
@@ -21,7 +55,7 @@ class onlinesurvey_soap_client extends SoapClient {
             $wsdlxml = curl_exec($ch);
             if (!$wsdlxml) {
                 $cache->set('WSDLURI', array("error" => time("now")));
-                throw new Exception('ERROR: Could not fetch WSDL');
+                throw new \Exception('ERROR: Could not fetch WSDL');
             }
 
             $url = parse_url($wsdl);
@@ -48,12 +82,15 @@ class onlinesurvey_soap_client extends SoapClient {
         }
 
         if (is_array($uri)) {
-            throw new Exception('ERROR: Could not fetch WSDL');
+            throw new \Exception('ERROR: Could not fetch WSDL');
         }
 
         parent::__construct($uri, $options);
     }
 
+    /**
+     * Override the doRequest thing
+     */
     public function __doRequest($request, $location, $action, $version, $one_way = 0) {
         global $CFG;
 
@@ -90,6 +127,7 @@ class onlinesurvey_soap_client extends SoapClient {
                     </SOAP-ENV:Envelope>';
         }
         curl_close($ch);
+
         return $ret;
     }
 }
