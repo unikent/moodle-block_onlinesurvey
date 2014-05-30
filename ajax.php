@@ -24,6 +24,7 @@ require_sesskey();
 $ajax = new onlinesurvey_ajax();
 $content = $ajax->get_content();
 
+echo $OUTPUT->header();
 echo json_encode(array(
     "footer" => $content->footer,
     "text" => $content->text
