@@ -41,7 +41,7 @@ class onlinesurvey_ajax {
     private $moodleemail;
 
     public function __construct() {
-        global $CFG;
+        global $CFG, $USER;
 
         $this->connectionok = false;
 
@@ -54,7 +54,6 @@ class onlinesurvey_ajax {
         $this->timeout = $CFG->block_onlinesurvey_survey_timeout;
 
         // Session information.
-        global $USER;
         if ($this->moodleuserid = $USER->id) {
             $this->moodleusername = $USER->username;
             $this->moodleemail = $USER->email;
