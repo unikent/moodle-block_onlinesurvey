@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 $string['pluginname'] = 'Module Evaluation';
-$string['tech_error'] = 'A technical problem occured while trying to obtain evaluations.<p>';
-$string['conn_works'] = 'Connection to Module Evaluation server tested successfully.<p>';
-$string['no_surveys'] = 'No open online surveys.<p>';
+$string['tech_error'] = 'A technical problem occured while trying to obtain evaluations.';
+$string['conn_works'] = 'Connection to Module Evaluation server tested successfully.';
+$string['no_surveys'] = 'No open online surveys.';
 $string['survey_server'] = 'EvaSys server';
 $string['survey_login'] = 'EvaSys login path';
 $string['survey_user'] = 'EvaSys SOAP user';
