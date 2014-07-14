@@ -47,10 +47,14 @@ class onlinesurvey_soap_client extends \SoapClient
         $uri = $cache->get('WSDLURI');
         if ($uri === false || (is_array($uri) && $uri['error'] + 240 < time("now"))) {
             $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $wsdl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT_MS, $CFG->block_onlinesurvey_survey_timeout);
+            curl_setopt_array($ch, array(
+                CURLOPT_URL             => $wsdl,
+                CURLOPT_HEADER          => false,
+                CURLOPT_RETURNTRANSFER  => true,
+                CURLOPT_CONNECTTIMEOUT  => $CFG->block_onlinesurvey_survey_timeout,
+                CURLOPT_TIMEOUT         => $CFG->block_onlinesurvey_survey_timeout,
+                CURLOPT_HTTP_VERSION    => CURL_HTTP_VERSION_1_1
+            ));
 
             $wsdlxml = curl_exec($ch);
             if (!$wsdlxml) {
