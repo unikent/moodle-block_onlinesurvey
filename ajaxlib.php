@@ -188,7 +188,7 @@ class onlinesurvey_ajax {
     private function pretty_print_exceptions($e) {
         $msg = '';
         if (get_class($e) == "SoapFault") {
-            $msg = "{$e->faultstring}: {$e->detail}";
+            $msg = "{$e->faultstring}: " . $e->getMessage();
         } else {
             $msg = $e->getMessage();
         }

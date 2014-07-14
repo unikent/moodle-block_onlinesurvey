@@ -47,4 +47,4 @@ if (!$user) {
 $CFG->block_onlinesurvey_survey_debug = 1;
 
 $ajax = new onlinesurvey_ajax();
-print $ajax->get_content();
+print_r($ajax->get_content());
