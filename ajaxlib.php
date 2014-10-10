@@ -86,46 +86,48 @@ class onlinesurvey_ajax {
             $content->footer = '<hr />' . get_string('copyright', 'block_onlinesurvey');
 
             $keys = $this->get_surveys();
+            if (!is_object($keys) || empty($keys->OnlineSurveyKeys)) {
+                $keys = false;
+            }
 
             // No keys, set cache and let the user know.
-            if ($keys === false && !$this->debugmode) {
+            if ($keys === false) {
                 $content->text = get_string('no_surveys', 'block_onlinesurvey');
+
+                if ($this->debugmode && has_capability('moodle/site:config', context_system::instance())) {
+                    if ($this->error) {
+                        $content->text = "<b>An error has occured:</b><br />{$this->error}<br />" . $content->text;
+                    } else if ($this->warning) {
+                        $content->text = "<b>Warning:</b><br />{$this->warning}<hr />" . $content->text;
+                    } else if ($this->connectionok) {
+                        $content->text = get_string('conn_works', 'block_onlinesurvey');
+                    }
+                }
+
                 return $content;
             }
 
-            if (is_object($keys)) {
-                if (!is_array($keys->OnlineSurveyKeys)) {
-                    $keys->OnlineSurveyKeys = array(
-                        $keys->OnlineSurveyKeys
-                    );
-                }
-
-                $count = count($keys->OnlineSurveyKeys);
-                if ($count) {
-                    $list = '';
-                    foreach ($keys->OnlineSurveyKeys as $surveykey) {
-                        $modulecode = "";
-                        if (!empty($surveykey->Instructor->LastName)) {
-                            $modulecode = " (".trim($surveykey->Instructor->LastName).")";
-                        }
-                        $list .= "<li><a href=\"{$this->surveyurl}" . self::SURVEY_URL .
-                                 "{$surveykey->TransactionNumber}\" target=\"_blank\">".
-                                 $surveykey->CourseName . $modulecode .
-                                 "</a></li>";
-                    }
-                    $instructions = get_string('survey_instructions', 'block_onlinesurvey');
-                    $content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
-                }
+            if (!is_array($keys->OnlineSurveyKeys)) {
+                $keys->OnlineSurveyKeys = array(
+                    $keys->OnlineSurveyKeys
+                );
             }
-        }
 
-        if ($this->debugmode && has_capability('moodle/site:config', context_system::instance())) {
-            if ($this->error) {
-                $content->text = "<b>An error has occured:</b><br />{$this->error}<br />" . $content->text;
-            } else if ($this->warning) {
-                $content->text = "<b>Warning:</b><br />{$this->warning}<hr />" . $content->text;
-            } else if ($this->connectionok) {
-                $content->text = get_string('conn_works', 'block_onlinesurvey');
+            $count = count($keys->OnlineSurveyKeys);
+            if ($count) {
+                $list = '';
+                foreach ($keys->OnlineSurveyKeys as $surveykey) {
+                    $modulecode = "";
+                    if (!empty($surveykey->Instructor->LastName)) {
+                        $modulecode = " (".trim($surveykey->Instructor->LastName).")";
+                    }
+                    $list .= "<li><a href=\"{$this->surveyurl}" . self::SURVEY_URL .
+                             "{$surveykey->TransactionNumber}\" target=\"_blank\">".
+                             $surveykey->CourseName . $modulecode .
+                             "</a></li>";
+                }
+                $instructions = get_string('survey_instructions', 'block_onlinesurvey');
+                $content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
             }
         }
 
