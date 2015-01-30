@@ -25,5 +25,5 @@ $string['survey_pwd'] = 'EvaSys SOAP Kennwort';
 $string['survey_timeout'] = 'Verbindungstimeout in Sekunden';
 $string['onlinesurvey:addinstance'] = 'Instanz des Blocks Evaluationen (EvaSys) hinzufügen';
 $string['onlinesurvey:myaddinstance'] = 'Instanz des Blocks Evaluationen (EvaSys) zu meiner Seite hinzufügen';
-$string['copyright'] = "(c) Electric Paper GmbH V1.4";
+$string['copyright'] = "(c) Electric Paper GmbH V1.4.1";
 $string['cachedef_onlinesurvey'] = 'Evaluationen (EvaSys) WSDL';
