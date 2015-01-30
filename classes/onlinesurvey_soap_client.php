@@ -52,7 +52,7 @@ class onlinesurvey_soap_client extends \SoapClient
                 CURLOPT_HEADER          => false,
                 CURLOPT_RETURNTRANSFER  => true,
                 CURLOPT_CONNECTTIMEOUT  => $CFG->block_onlinesurvey_survey_timeout,
-                CURLOPT_TIMEOUT         => $CFG->block_onlinesurvey_survey_timeout,
+                CURLOPT_TIMEOUT_MS      => $CFG->block_onlinesurvey_survey_timeout,
                 CURLOPT_HTTP_VERSION    => CURL_HTTP_VERSION_1_1
             ));
 
