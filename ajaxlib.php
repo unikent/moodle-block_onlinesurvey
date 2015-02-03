@@ -117,13 +117,9 @@ class onlinesurvey_ajax {
             if ($count) {
                 $list = '';
                 foreach ($keys->OnlineSurveyKeys as $surveykey) {
-                    $modulecode = "";
-                    if (!empty($surveykey->Instructor->LastName)) {
-                        $modulecode = " (".trim($surveykey->Instructor->LastName).")";
-                    }
                     $list .= "<li><a href=\"{$this->surveyurl}" . self::SURVEY_URL .
                              "{$surveykey->TransactionNumber}\" target=\"_blank\">".
-                             $surveykey->CourseName . $modulecode .
+                             $surveykey->CourseName .
                              "</a></li>";
                 }
                 $instructions = get_string('survey_instructions', 'block_onlinesurvey');
