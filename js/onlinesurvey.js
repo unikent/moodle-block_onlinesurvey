@@ -4,7 +4,7 @@ YUI().use("node", "io", "dump", "json-parse", function(Y) {
     var surveyfooter = Y.one("#onlinesurvey-footer");
     survey.setHTML("Requesting surveys...");
     
-    var callback = {
+    Y.io(M.cfg.wwwroot+"/blocks/onlinesurvey/ajax.php", {
 
         timeout : 3000,
         method : "GET",
@@ -42,6 +42,5 @@ YUI().use("node", "io", "dump", "json-parse", function(Y) {
                 survey.setHTML("Unable to obtain surveys...");
             }
         }
-    }
-    Y.io(M.cfg.wwwroot+"/blocks/onlinesurvey/ajax.php", callback);
+    });
 });
