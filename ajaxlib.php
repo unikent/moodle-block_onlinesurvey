@@ -78,10 +78,6 @@ class onlinesurvey_ajax {
         global $USER;
 
         $cache = \cache::make('block_onlinesurvey', 'onlinesurvey');
-        $content = $cache->get('os_' . $USER->id);
-        if ($content && $content->timeout > time()) {
-            return $content;
-        }
 
         // Setup content.
         $content = new stdClass();

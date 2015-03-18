@@ -1,7 +1,11 @@
 YUI().use("node", "io", "dump", "json-parse", function(Y) {
-    Y.log("Started");
     var survey = Y.one("#onlinesurvey-text");
     var surveyfooter = Y.one("#onlinesurvey-footer");
+
+    if (!survey) {
+        return;
+    }
+
     survey.setHTML("Requesting surveys...");
 
     Y.io(M.cfg.wwwroot+"/blocks/onlinesurvey/ajax.php", {
