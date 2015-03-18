@@ -75,16 +75,22 @@ class onlinesurvey_ajax {
     }
 
     public function get_content() {
+        global $USER;
+
+        $cache = \cache::make('block_onlinesurvey', 'onlinesurvey');
+        $content = $cache->get('os_' . $USER->id);
+        if ($content && $content->timeout > time()) {
+            return $content;
+        }
+
         // Setup content.
         $content = new stdClass();
+        $content->timeout = time() + 1800;
         $content->text = '';
+        $content->footer = '';
 
         // Should we be trying this?
         if ($this->moodleuserid && $this->isconfigured) {
-
-            // Add copyright notice to footer.
-            $content->footer = '<hr />' . get_string('copyright', 'block_onlinesurvey');
-
             $keys = $this->get_surveys();
             if (!is_object($keys) || empty($keys->OnlineSurveyKeys)) {
                 $keys = false;
@@ -103,6 +109,8 @@ class onlinesurvey_ajax {
                         $content->text = get_string('conn_works', 'block_onlinesurvey');
                     }
                 }
+
+                $cache->set('os_' . $USER->id, $content);
 
                 return $content;
             }
@@ -126,6 +134,8 @@ class onlinesurvey_ajax {
                 $content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
             }
         }
+
+        $cache->set('os_' . $USER->id, $content);
 
         return $content;
     }

@@ -30,7 +30,11 @@ YUI().use("node", "io", "dump", "json-parse", function(Y) {
                     survey.setHTML("Unable to obtain surveys..");
                 } else {
                     survey.setHTML(data.text);
-                    surveyfooter.setHTML(data.footer);
+                    if (data.footer !== '') {
+                        surveyfooter.setHTML(data.footer);
+                    } else {
+                        surveyfooter.get('parentNode').remove();
+                    }
                 }
             },
 
