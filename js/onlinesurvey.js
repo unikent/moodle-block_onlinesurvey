@@ -3,16 +3,14 @@ YUI().use("node", "io", "dump", "json-parse", function(Y) {
     var survey = Y.one("#onlinesurvey-text");
     var surveyfooter = Y.one("#onlinesurvey-footer");
     survey.setHTML("Requesting surveys...");
-    
-    Y.io(M.cfg.wwwroot+"/blocks/onlinesurvey/ajax.php", {
 
-        timeout : 3000,
-        method : "GET",
-        data : {
+    Y.io(M.cfg.wwwroot+"/blocks/onlinesurvey/ajax.php", {
+        timeout: 3000,
+        method: "GET",
+        data: {
             sesskey : M.cfg.sesskey
         },
-
-        on : {
+        on: {
             success : function (x,o) {
                 Y.log("RAW JSON DATA: " + o.responseText);
 
