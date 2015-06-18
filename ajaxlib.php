@@ -20,113 +20,63 @@ defined('MOODLE_INTERNAL') || die();
  * Online Survey AJAX class
  */
 class onlinesurvey_ajax {
-    const SURVEY_URL = 'indexstud.php?type=html&user_tan=';
-
-    private $debugmode;
-    private $isconfigured;
-    private $warning;
-    private $error;
-    private $connectionok;
-
-    private $surveyurl;
-
-    private $wsdl;
-    private $soapuser;
-    private $soappassword;
-    private $timeout;
     private $wsdlnamespace;
-
-    private $moodleuserid;
-    private $moodleusername;
-    private $moodleemail;
 
     public function __construct() {
         global $CFG, $USER;
 
-        $this->connectionok = false;
-
-        // Block settings.
-        $this->debugmode = $CFG->block_onlinesurvey_survey_debug == 1;
-        $this->surveyurl = $CFG->block_onlinesurvey_survey_login;
-        $this->wsdl = $CFG->block_onlinesurvey_survey_server;
-        $this->soapuser = $CFG->block_onlinesurvey_survey_user;
-        $this->soappassword = $CFG->block_onlinesurvey_survey_pwd;
-        $this->timeout = $CFG->block_onlinesurvey_survey_timeout;
-
-        // Session information.
-        if ($this->moodleuserid = $USER->id) {
-            $this->moodleusername = $USER->username;
-            $this->moodleemail = $USER->email;
-
-            // Parse wsdlnamespace from the wsdl url.
-            preg_match('/\/([^\/]+\.wsdl)$/', $this->wsdl, $matches);
-
-            if (count($matches) == 2) {
-                $this->wsdlnamespace = $matches[1];
-                $this->isconfigured = true;
-            } else {
-                $this->isconfigured = false;
-                $this->handle_error("WSDL namespace parse error");
-            }
-        } else {
-            $this->isconfigured = false;
-            $this->handle_error("User ID not found");
+        // Parse wsdlnamespace from the wsdl url.
+        preg_match('/\/([^\/]+\.wsdl)$/', $CFG->block_onlinesurvey_survey_server, $matches);
+        if (count($matches) !== 2) {
+            throw new \moodle_exception("WSDL namespace parse error");
         }
+
+        $this->wsdlnamespace = $matches[1];
     }
 
     public function get_content() {
-        global $USER;
-
-        $cache = \cache::make('block_onlinesurvey', 'soapdata');
+        global $CFG, $USER;
 
         // Setup content.
         $content = new \stdClass();
-        $content->timeout = time() + 1800;
         $content->text = '';
         $content->footer = '';
 
-        // Should we be trying this?
-        if ($this->moodleuserid && $this->isconfigured) {
-            $keys = $this->get_surveys();
-            if (!is_object($keys) || empty($keys->OnlineSurveyKeys)) {
-                $keys = false;
+        if (!isloggedin()) {
+            return $content;
+        }
+
+        $cache = \cache::make('block_onlinesurvey', 'soapdata');
+        $content->timeout = time() + 1800;
+
+        // Get the keys!
+        $keys = $this->get_surveys();
+        if (!is_object($keys) || empty($keys->OnlineSurveyKeys)) {
+            $keys = false;
+        }
+
+        // No keys, set cache and let the user know.
+        if ($keys === false) {
+            $content->text = get_string('no_surveys', 'block_onlinesurvey');
+            $cache->set('os_' . $USER->id, $content);
+            return $content;
+        }
+
+        if (!is_array($keys->OnlineSurveyKeys)) {
+            $keys->OnlineSurveyKeys = array(
+                $keys->OnlineSurveyKeys
+            );
+        }
+
+        $count = count($keys->OnlineSurveyKeys);
+        if ($count) {
+            $list = '';
+            foreach ($keys->OnlineSurveyKeys as $surveykey) {
+                $list .= "<li><a href=\"{$CFG->block_onlinesurvey_survey_login}indexstud.php?type=html&user_tan={$surveykey->TransactionNumber}\" target=\"_blank\">";
+                $list .= "{$surveykey->CourseName}</a></li>";
             }
-
-            // No keys, set cache and let the user know.
-            if ($keys === false) {
-                $content->text = get_string('no_surveys', 'block_onlinesurvey');
-
-                if ($this->debugmode && has_capability('moodle/site:config', context_system::instance())) {
-                    if ($this->error) {
-                        $content->text = "<b>An error has occured:</b><br />{$this->error}<br />" . $content->text;
-                    } else if ($this->warning) {
-                        $content->text = "<b>Warning:</b><br />{$this->warning}<hr />" . $content->text;
-                    } else if ($this->connectionok) {
-                        $content->text = get_string('conn_works', 'block_onlinesurvey');
-                    }
-                }
-
-                $cache->set('os_' . $USER->id, $content);
-
-                return $content;
-            }
-
-            if (!is_array($keys->OnlineSurveyKeys)) {
-                $keys->OnlineSurveyKeys = array(
-                    $keys->OnlineSurveyKeys
-                );
-            }
-
-            $count = count($keys->OnlineSurveyKeys);
-            if ($count) {
-                $list = '';
-                foreach ($keys->OnlineSurveyKeys as $surveykey) {
-                    $list .= "<li><a href=\"{$this->surveyurl}indexstud.php?type=html&user_tan={$surveykey->TransactionNumber}\" target=\"_blank\">";
-                    $list .= "{$surveykey->CourseName}</a></li>";
-                }
-                $instructions = get_string('survey_instructions', 'block_onlinesurvey');
-                $content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
-            }
+            $instructions = get_string('survey_instructions', 'block_onlinesurvey');
+            $content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
         }
 
         $cache->set('os_' . $USER->id, $content);
@@ -135,64 +85,24 @@ class onlinesurvey_ajax {
     }
 
     private function get_surveys() {
-        try {
-            $client = new \block_onlinesurvey\onlinesurvey_soap_client( $this->wsdl,
-                array (
-                    'trace' => $this->debugmode ? 1 : 0,
-                    'feature' => \SOAP_SINGLE_ELEMENT_ARRAYS,
-                    'connection_timeout' => max(1, round($this->timeout / 1000)),
-                    'cache_wsdl' => $this->debugmode ? \WSDL_CACHE_NONE : \WSDL_CACHE_MEMORY
-                ),
-                $this->debugmode
-            );
+        global $CFG, $USER;
 
-            if (is_object($client)) {
-                if ($client->haswarning) {
-                    $this->warning = $client->warnmessage;
-                }
+        $client = new \block_onlinesurvey\onlinesurvey_soap_client($CFG->block_onlinesurvey_survey_server, array(
+            'trace' => $CFG->block_onlinesurvey_survey_debug ? 1 : 0,
+            'feature' => \SOAP_SINGLE_ELEMENT_ARRAYS,
+            'connection_timeout' => max(1, round($CFG->block_onlinesurvey_survey_timeout / 1000)),
+            'cache_wsdl' => $CFG->block_onlinesurvey_survey_debug ? \WSDL_CACHE_NONE : \WSDL_CACHE_MEMORY
+        ));
 
-                $soapheader = new \SoapHeader($this->wsdlnamespace, 'Header', array(
-                    'Login' => $this->soapuser,
-                    'Password' => $this->soappassword
-                ));
-                $client->__setSoapHeaders($soapheader);
-            } else {
-                $this->handle_error("SOAP client configuration error");
-                return false;
-            }
-
-            $this->client = $client;
-            $this->connectionok = true;
-            return $client->GetPswdsByParticipant($this->moodleemail);
-        } catch (\Exception $e) {
-            $this->handle_error($e);
-            return false;
-        }
-    }
-
-    private function handle_error($err) {
-        if (is_array($err)) {
-            // Configuration validation error.
-            if (!$err[0]) {
-                $this->error = $err[1];
-            }
-        } else if (is_string($err)) {
-            // Simple error message.
-            $this->error = $err;
-        } else {
-            // Error should be an exception.
-            $this->error = $this->pretty_print_exceptions($err);
-        }
-    }
-
-    private function pretty_print_exceptions($e) {
-        $msg = '';
-        if (get_class($e) == "SoapFault") {
-            $msg = "{$e->faultstring}: " . $e->getMessage();
-        } else {
-            $msg = $e->getMessage();
+        if (!is_object($client)) {
+            throw new \moodle_exception("SOAP client configuration error");
         }
 
-        return $msg;
+        $client->__setSoapHeaders(new \SoapHeader($this->wsdlnamespace, 'Header', array(
+            'Login' => $CFG->block_onlinesurvey_survey_user,
+            'Password' => $CFG->block_onlinesurvey_survey_pwd
+        )));
+
+        return $client->GetPswdsByParticipant($USER->email);
     }
 }

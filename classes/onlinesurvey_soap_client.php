@@ -31,17 +31,11 @@ defined('MOODLE_INTERNAL') || die();
  */
 class onlinesurvey_soap_client extends \SoapClient
 {
-    public $debugmode;
-    public $haswarning = false;
-    public $warnmessage = "";
-
     /**
      * Construct the SOAP Client
      */
-    public function __construct($wsdl, $options, $debug = false) {
+    public function __construct($wsdl, $options) {
         global $CFG;
-
-        $this->debugmode = $debug;
 
         $cache = \cache::make('block_onlinesurvey', 'onlinesurvey');
         $uri = $cache->get('WSDLURI');
@@ -72,11 +66,8 @@ class onlinesurvey_soap_client extends \SoapClient
                 $wsdlserveraddress = $match[1];
             }
 
-            if ($urlserveraddress != $wsdlserveraddress AND $debug) {
-                $this->haswarning = true;
-                $this->warnmessage = "WSDL endpoint setting might not be correct.
-                        URL: $urlserveraddress,
-                        Endpoint address: $wsdlserveraddress.";
+            if ($urlserveraddress != $wsdlserveraddress) {
+                debugging("WSDL endpoint setting might not be correct. URL: $urlserveraddress, Endpoint address: $wsdlserveraddress.");
             }
 
             $base64 = base64_encode($wsdlxml);
@@ -95,7 +86,7 @@ class onlinesurvey_soap_client extends \SoapClient
     /**
      * Override the doRequest thing
      */
-    public function __doRequest($request, $location, $action, $version, $one_way = 0) {
+    public function __doRequest($request, $location, $action, $version, $oneway = 0) {
         global $CFG;
 
         $headers = array(
