@@ -45,7 +45,6 @@ class core
 
         // Build the cache.
         $cache = \cache::make('block_onlinesurvey', 'soapdata');
-        $content->timeout = time() + 1800;
 
         // Get the keys!
         $keys = $this->get_surveys();
