@@ -97,7 +97,20 @@ class core
             'Password' => $CFG->block_onlinesurvey_survey_pwd
         )));
 
-        $keys = $client->GetPswdsByParticipant($USER->email);
+        try {
+            $keys = $client->GetPswdsByParticipant($USER->email);
+        } catch (\SoapFault $e) {
+            if ($e->faultstring == 'ERR_102') {
+                debugging("IP disallowed.");
+            }
+
+            if ($e->faultstring == 'ERR_206') {
+                return null;
+            }
+
+            throw $e;
+        }
+
         if (!is_object($keys) || empty($keys->OnlineSurveyKeys)) {
             return null;
         }
