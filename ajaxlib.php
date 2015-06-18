@@ -20,20 +20,6 @@ defined('MOODLE_INTERNAL') || die();
  * Online Survey AJAX class
  */
 class onlinesurvey_ajax {
-    private $wsdlnamespace;
-
-    public function __construct() {
-        global $CFG, $USER;
-
-        // Parse wsdlnamespace from the wsdl url.
-        preg_match('/\/([^\/]+\.wsdl)$/', $CFG->block_onlinesurvey_survey_server, $matches);
-        if (count($matches) !== 2) {
-            throw new \moodle_exception("WSDL namespace parse error");
-        }
-
-        $this->wsdlnamespace = $matches[1];
-    }
-
     public function get_content() {
         global $CFG, $USER;
 
@@ -46,14 +32,15 @@ class onlinesurvey_ajax {
             return $content;
         }
 
-        $cache = \cache::make('block_onlinesurvey', 'soapdata');
-        $content->timeout = time() + 1800;
-
         // Get the keys!
         $keys = $this->get_surveys();
         if (!is_object($keys) || empty($keys->OnlineSurveyKeys)) {
             $keys = false;
         }
+
+        // Build the cache.
+        $cache = \cache::make('block_onlinesurvey', 'soapdata');
+        $content->timeout = time() + 1800;
 
         // No keys, set cache and let the user know.
         if ($keys === false) {
@@ -87,6 +74,13 @@ class onlinesurvey_ajax {
     private function get_surveys() {
         global $CFG, $USER;
 
+        // Parse wsdlnamespace from the wsdl url.
+        preg_match('/\/([^\/]+\.wsdl)$/', $CFG->block_onlinesurvey_survey_server, $matches);
+        if (count($matches) !== 2) {
+            throw new \moodle_exception("WSDL namespace parse error");
+        }
+        $wsdlnamespace = $matches[1];
+
         $client = new \block_onlinesurvey\onlinesurvey_soap_client($CFG->block_onlinesurvey_survey_server, array(
             'trace' => $CFG->block_onlinesurvey_survey_debug ? 1 : 0,
             'feature' => \SOAP_SINGLE_ELEMENT_ARRAYS,
@@ -98,7 +92,7 @@ class onlinesurvey_ajax {
             throw new \moodle_exception("SOAP client configuration error");
         }
 
-        $client->__setSoapHeaders(new \SoapHeader($this->wsdlnamespace, 'Header', array(
+        $client->__setSoapHeaders(new \SoapHeader($wsdlnamespace, 'Header', array(
             'Login' => $CFG->block_onlinesurvey_survey_user,
             'Password' => $CFG->block_onlinesurvey_survey_pwd
         )));
