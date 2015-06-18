@@ -77,10 +77,10 @@ class onlinesurvey_ajax {
     public function get_content() {
         global $USER;
 
-        $cache = \cache::make('block_onlinesurvey', 'onlinesurvey');
+        $cache = \cache::make('block_onlinesurvey', 'soapdata');
 
         // Setup content.
-        $content = new stdClass();
+        $content = new \stdClass();
         $content->timeout = time() + 1800;
         $content->text = '';
         $content->footer = '';
@@ -121,10 +121,8 @@ class onlinesurvey_ajax {
             if ($count) {
                 $list = '';
                 foreach ($keys->OnlineSurveyKeys as $surveykey) {
-                    $list .= "<li><a href=\"{$this->surveyurl}" . self::SURVEY_URL .
-                             "{$surveykey->TransactionNumber}\" target=\"_blank\">".
-                             $surveykey->CourseName .
-                             "</a></li>";
+                    $list .= "<li><a href=\"{$this->surveyurl}indexstud.php?type=html&user_tan={$surveykey->TransactionNumber}\" target=\"_blank\">";
+                    $list .= "{$surveykey->CourseName}</a></li>";
                 }
                 $instructions = get_string('survey_instructions', 'block_onlinesurvey');
                 $content->text = "<p>{$instructions}</p><ul class='list'>" . $list . "</ul>";
@@ -141,16 +139,11 @@ class onlinesurvey_ajax {
             $client = new \block_onlinesurvey\onlinesurvey_soap_client( $this->wsdl,
                 array (
                     'trace' => $this->debugmode ? 1 : 0,
-                    'feature' => SOAP_SINGLE_ELEMENT_ARRAYS,
+                    'feature' => \SOAP_SINGLE_ELEMENT_ARRAYS,
                     'connection_timeout' => max(1, round($this->timeout / 1000)),
-                    'cache_wsdl' => $this->debugmode ? WSDL_CACHE_NONE : WSDL_CACHE_MEMORY
+                    'cache_wsdl' => $this->debugmode ? \WSDL_CACHE_NONE : \WSDL_CACHE_MEMORY
                 ),
                 $this->debugmode
-            );
-
-            $header = array(
-                'Login' => $this->soapuser,
-                'Password' => $this->soappassword
             );
 
             if (is_object($client)) {
@@ -158,7 +151,10 @@ class onlinesurvey_ajax {
                     $this->warning = $client->warnmessage;
                 }
 
-                $soapheader = new SoapHeader($this->wsdlnamespace, 'Header', $header);
+                $soapheader = new \SoapHeader($this->wsdlnamespace, 'Header', array(
+                    'Login' => $this->soapuser,
+                    'Password' => $this->soappassword
+                ));
                 $client->__setSoapHeaders($soapheader);
             } else {
                 $this->handle_error("SOAP client configuration error");
@@ -168,7 +164,7 @@ class onlinesurvey_ajax {
             $this->client = $client;
             $this->connectionok = true;
             return $client->GetPswdsByParticipant($this->moodleemail);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->handle_error($e);
             return false;
         }
