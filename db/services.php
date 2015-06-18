@@ -14,12 +14,30 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
+/**
+ * Local stuff for Online Survey block.
+ *
+ * @package    block_onlinesurvey
+ * @copyright  2015 Skylar Kelty <S.Kelty@kent.ac.uk>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
-$definitions = array(
-    'soapdata' => array(
-        'mode' => cache_store::MODE_APPLICATION,
-        'ttl' => 14400,
-        'simplekeys' => true
+$services = array(
+    'Survey Service' => array(
+        'functions' => array (
+            'blocks_onlinesurvey_get_surveys'
+        ),
+        'requiredcapability' => '',
+        'restrictedusers' => 0,
+        'enabled' => 1
+    )
+);
+
+$functions = array(
+    'blocks_onlinesurvey_get_surveys' => array(
+        'classname'   => 'block_onlinesurvey\services',
+        'methodname'  => 'get_surveys',
+        'description' => 'Get Surveys.',
+        'type'        => 'read'
     )
 );

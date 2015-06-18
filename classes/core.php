@@ -14,13 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Evasys Block
+ *
+ * @package    block_onlinesurvey
+ * @copyright  2015 Skylar Kelty <S.Kelty@kent.ac.uk>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+namespace block_onlinesurvey;
+
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Online Survey AJAX class
+ * Evasys core
  */
-class onlinesurvey_ajax {
-    public function get_content() {
+class core
+{
+    public function get_block_content() {
         global $CFG, $USER;
 
         // Setup content.
@@ -32,27 +43,16 @@ class onlinesurvey_ajax {
             return $content;
         }
 
-        // Get the keys!
-        $keys = $this->get_surveys();
-        if (!is_object($keys) || empty($keys->OnlineSurveyKeys)) {
-            $keys = false;
-        }
-
         // Build the cache.
         $cache = \cache::make('block_onlinesurvey', 'soapdata');
         $content->timeout = time() + 1800;
 
-        // No keys, set cache and let the user know.
-        if ($keys === false) {
+        // Get the keys!
+        $keys = $this->get_surveys();
+        if (!$keys) {
             $content->text = get_string('no_surveys', 'block_onlinesurvey');
             $cache->set('os_' . $USER->id, $content);
             return $content;
-        }
-
-        if (!is_array($keys->OnlineSurveyKeys)) {
-            $keys->OnlineSurveyKeys = array(
-                $keys->OnlineSurveyKeys
-            );
         }
 
         $count = count($keys->OnlineSurveyKeys);
@@ -81,7 +81,7 @@ class onlinesurvey_ajax {
         }
         $wsdlnamespace = $matches[1];
 
-        $client = new \block_onlinesurvey\onlinesurvey_soap_client($CFG->block_onlinesurvey_survey_server, array(
+        $client = new onlinesurvey_soap_client($CFG->block_onlinesurvey_survey_server, array(
             'trace' => $CFG->block_onlinesurvey_survey_debug ? 1 : 0,
             'feature' => \SOAP_SINGLE_ELEMENT_ARRAYS,
             'connection_timeout' => max(1, round($CFG->block_onlinesurvey_survey_timeout / 1000)),
@@ -97,6 +97,17 @@ class onlinesurvey_ajax {
             'Password' => $CFG->block_onlinesurvey_survey_pwd
         )));
 
-        return $client->GetPswdsByParticipant($USER->email);
+        $keys = $client->GetPswdsByParticipant($USER->email);
+        if (!is_object($keys) || empty($keys->OnlineSurveyKeys)) {
+            return null;
+        }
+
+        if (!is_array($keys->OnlineSurveyKeys)) {
+            $keys->OnlineSurveyKeys = array(
+                $keys->OnlineSurveyKeys
+            );
+        }
+
+        return $keys;
     }
 }

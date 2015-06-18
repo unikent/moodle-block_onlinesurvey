@@ -21,7 +21,6 @@
 define('CLI_SCRIPT', true);
 
 require_once(dirname(__FILE__) . '/../../../config.php');
-require_once(dirname(__FILE__) . '/../ajaxlib.php');
 require_once($CFG->libdir . '/clilib.php');
 
 list($options, $unrecognized) = cli_get_params(
@@ -31,20 +30,15 @@ list($options, $unrecognized) = cli_get_params(
 );
 
 if (empty($options['username'])) {
-	cli_error('You must specify a username.');
+    cli_error('You must specify a username.');
 }
 
 $user = $DB->get_record('user', array(
     'username' => $options['username']
-));
-
-if (!$user) {
-    cli_error('Invalid username.');
-}
-
+), '*', MUST_EXIST);
 \core\session\manager::set_user($user);
 
-$CFG->block_onlinesurvey_survey_debug = 1;
 
-$ajax = new onlinesurvey_ajax();
-print_r($ajax->get_content());
+$CFG->block_onlinesurvey_survey_debug = 1;
+$ajax = new \block_onlinesurvey\core();
+print_r($ajax->get_block_content());

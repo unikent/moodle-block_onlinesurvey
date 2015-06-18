@@ -37,7 +37,7 @@ class onlinesurvey_soap_client extends \SoapClient
     public function __construct($wsdl, $options) {
         global $CFG;
 
-        $cache = \cache::make('block_onlinesurvey', 'onlinesurvey');
+        $cache = \cache::make('block_onlinesurvey', 'soapdata');
         $uri = $cache->get('WSDLURI');
         if ($uri === false || (is_array($uri) && $uri['error'] + 240 < time("now"))) {
             $ch = curl_init();
@@ -53,7 +53,7 @@ class onlinesurvey_soap_client extends \SoapClient
             $wsdlxml = curl_exec($ch);
             if (!$wsdlxml) {
                 $cache->set('WSDLURI', array("error" => time("now")));
-                throw new \Exception('ERROR: Could not fetch WSDL');
+                throw new \moodle_exception('ERROR: Could not fetch WSDL');
             }
 
             $url = parse_url($wsdl);
@@ -77,7 +77,7 @@ class onlinesurvey_soap_client extends \SoapClient
         }
 
         if (is_array($uri)) {
-            throw new \Exception('ERROR: Could not fetch WSDL');
+            throw new \moodle_exception('ERROR: Could not fetch WSDL');
         }
 
         parent::__construct($uri, $options);
@@ -89,12 +89,6 @@ class onlinesurvey_soap_client extends \SoapClient
     public function __doRequest($request, $location, $action, $version, $oneway = 0) {
         global $CFG;
 
-        $headers = array(
-            'Content-Type: text/xml;charset=UTF-8',
-            "SOAPAction: \"$action\"",
-            'Content-Length: ' . strlen($request)
-        );
-
         $ch = curl_init();
 
         // Set the url, number of POST vars, POST data.
@@ -104,7 +98,11 @@ class onlinesurvey_soap_client extends \SoapClient
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
         curl_setopt($ch, CURLOPT_TIMEOUT_MS, $CFG->block_onlinesurvey_survey_timeout);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: text/xml;charset=UTF-8',
+            "SOAPAction: \"$action\"",
+            'Content-Length: ' . strlen($request)
+        ));
 
         // Execute post.
         $ret = curl_exec($ch);
