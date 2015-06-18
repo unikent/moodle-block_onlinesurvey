@@ -32,7 +32,7 @@ class block_onlinesurvey extends block_base {
         parent::get_required_javascript();
 
         // Include our custom JS.
-        $this->page->requires->js('/blocks/onlinesurvey/js/onlinesurvey.js');
+        $this->page->requires->js_call_amd('block_onlinesurvey/core', 'init', array());
     }
 
     /**
@@ -49,13 +49,13 @@ class block_onlinesurvey extends block_base {
             return $this->content;
         }
 
-        $cache = \cache::make('block_onlinesurvey', 'onlinesurvey');
+        $cache = \cache::make('block_onlinesurvey', 'soapdata');
         $this->content = $cache->get('os_' . $USER->id);
         if ($this->content && $this->content->timeout > time()) {
             return $this->content;
         }
 
-        $this->content = new stdClass();
+        $this->content = new \stdClass();
         $this->content->text = '<div id="onlinesurvey-text">Requesting surveys</div>';
         $this->content->footer = '<div id="onlinesurvey-footer"></div>';
         return $this->content;
