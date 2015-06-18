@@ -31,19 +31,13 @@ defined('MOODLE_INTERNAL') || die();
  */
 class onlinesurvey_soap_client extends \SoapClient
 {
-    public $debugmode;
-    public $haswarning = false;
-    public $warnmessage = "";
-
     /**
      * Construct the SOAP Client
      */
-    public function __construct($wsdl, $options, $debug = false) {
+    public function __construct($wsdl, $options) {
         global $CFG;
 
-        $this->debugmode = $debug;
-
-        $cache = \cache::make('block_onlinesurvey', 'onlinesurvey');
+        $cache = \cache::make('block_onlinesurvey', 'soapdata');
         $uri = $cache->get('WSDLURI');
         if ($uri === false || (is_array($uri) && $uri['error'] + 240 < time("now"))) {
             $ch = curl_init();
@@ -59,7 +53,7 @@ class onlinesurvey_soap_client extends \SoapClient
             $wsdlxml = curl_exec($ch);
             if (!$wsdlxml) {
                 $cache->set('WSDLURI', array("error" => time("now")));
-                throw new \Exception('ERROR: Could not fetch WSDL');
+                throw new \moodle_exception('ERROR: Could not fetch WSDL');
             }
 
             $url = parse_url($wsdl);
@@ -72,11 +66,8 @@ class onlinesurvey_soap_client extends \SoapClient
                 $wsdlserveraddress = $match[1];
             }
 
-            if ($urlserveraddress != $wsdlserveraddress AND $debug) {
-                $this->haswarning = true;
-                $this->warnmessage = "WSDL endpoint setting might not be correct.
-                        URL: $urlserveraddress,
-                        Endpoint address: $wsdlserveraddress.";
+            if ($urlserveraddress != $wsdlserveraddress) {
+                debugging("WSDL endpoint setting might not be correct. URL: $urlserveraddress, Endpoint address: $wsdlserveraddress.");
             }
 
             $base64 = base64_encode($wsdlxml);
@@ -86,7 +77,7 @@ class onlinesurvey_soap_client extends \SoapClient
         }
 
         if (is_array($uri)) {
-            throw new \Exception('ERROR: Could not fetch WSDL');
+            throw new \moodle_exception('ERROR: Could not fetch WSDL');
         }
 
         parent::__construct($uri, $options);
@@ -95,14 +86,8 @@ class onlinesurvey_soap_client extends \SoapClient
     /**
      * Override the doRequest thing
      */
-    public function __doRequest($request, $location, $action, $version, $one_way = 0) {
+    public function __doRequest($request, $location, $action, $version, $oneway = 0) {
         global $CFG;
-
-        $headers = array(
-            'Content-Type: text/xml;charset=UTF-8',
-            "SOAPAction: \"$action\"",
-            'Content-Length: ' . strlen($request)
-        );
 
         $ch = curl_init();
 
@@ -113,7 +98,11 @@ class onlinesurvey_soap_client extends \SoapClient
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
         curl_setopt($ch, CURLOPT_TIMEOUT_MS, $CFG->block_onlinesurvey_survey_timeout);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: text/xml;charset=UTF-8',
+            "SOAPAction: \"$action\"",
+            'Content-Length: ' . strlen($request)
+        ));
 
         // Execute post.
         $ret = curl_exec($ch);

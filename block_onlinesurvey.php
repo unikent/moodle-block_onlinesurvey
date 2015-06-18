@@ -32,7 +32,7 @@ class block_onlinesurvey extends block_base {
         parent::get_required_javascript();
 
         // Include our custom JS.
-        $this->page->requires->js('/blocks/onlinesurvey/js/onlinesurvey.js');
+        $this->page->requires->js_call_amd('block_onlinesurvey/core', 'init', array());
     }
 
     /**
@@ -49,13 +49,13 @@ class block_onlinesurvey extends block_base {
             return $this->content;
         }
 
-        $cache = \cache::make('block_onlinesurvey', 'onlinesurvey');
+        $cache = \cache::make('block_onlinesurvey', 'soapdata');
         $this->content = $cache->get('os_' . $USER->id);
-        if ($this->content && $this->content->timeout > time()) {
+        if ($this->content) {
             return $this->content;
         }
 
-        $this->content = new stdClass();
+        $this->content = new \stdClass();
         $this->content->text = '<div id="onlinesurvey-text">Requesting surveys</div>';
         $this->content->footer = '<div id="onlinesurvey-footer"></div>';
         return $this->content;
@@ -81,33 +81,23 @@ class block_onlinesurvey extends block_base {
     }
 
     /**
-     * Default return is false - header will be shown
-     * @return boolean
+     * Returns the role that best describes the navigation block... 'navigation'
+     *
+     * @return string 'navigation'
      */
-    public function hide_header() {
-        return false;
+    public function get_aria_role() {
+        return 'navigation';
     }
 
     /**
-     * Which page types this block may appear on.
+     * locations where block can be displayed
+     * Moodle override.
      *
-     * The information returned here is processed by the
-     * {@link blocks_name_allowed_in_format()} function. Look there if you need
-     * to know exactly how this works.
-     *
-     * Default case: everything except mod and tag.
-     *
-     * @return array page-type prefix => true/false.
+     * @return array
      */
     public function applicable_formats() {
-        $context = context_system::instance();
-        if (has_capability('moodle/site:config', $context)) {
-            return array('all' => true);
-        } else {
-            return array(
-                'all' => false,
-                'admin' => true
-            );
-        }
+        return array(
+            'my' => true
+        );
     }
 }

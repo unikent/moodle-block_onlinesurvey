@@ -17,9 +17,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 $definitions = array(
-    'onlinesurvey' => array(
+    'soapdata' => array(
         'mode' => cache_store::MODE_APPLICATION,
-        'ttl' => 14400,
+        'ttl' => 3600,
         'simplekeys' => true
     )
 );

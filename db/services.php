@@ -15,30 +15,29 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Grabs and displays the raw data from Evasys.
+ * Local stuff for Online Survey block.
+ *
+ * @package    block_onlinesurvey
+ * @copyright  2015 Skylar Kelty <S.Kelty@kent.ac.uk>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define('CLI_SCRIPT', true);
-
-require_once(dirname(__FILE__) . '/../../../config.php');
-require_once($CFG->libdir . '/clilib.php');
-
-list($options, $unrecognized) = cli_get_params(
-    array(
-        'username' => ''
+$services = array(
+    'Survey Service' => array(
+        'functions' => array (
+            'blocks_onlinesurvey_get_surveys'
+        ),
+        'requiredcapability' => '',
+        'restrictedusers' => 0,
+        'enabled' => 1
     )
 );
 
-if (empty($options['username'])) {
-    cli_error('You must specify a username.');
-}
-
-$user = $DB->get_record('user', array(
-    'username' => $options['username']
-), '*', MUST_EXIST);
-\core\session\manager::set_user($user);
-
-
-$CFG->block_onlinesurvey_survey_debug = 1;
-$ajax = new \block_onlinesurvey\core();
-print_r($ajax->get_block_content());
+$functions = array(
+    'blocks_onlinesurvey_get_surveys' => array(
+        'classname'   => 'block_onlinesurvey\services',
+        'methodname'  => 'get_surveys',
+        'description' => 'Get Surveys.',
+        'type'        => 'read'
+    )
+);
