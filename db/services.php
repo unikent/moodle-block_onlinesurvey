@@ -38,6 +38,7 @@ $functions = array(
         'classname'   => 'block_onlinesurvey\services',
         'methodname'  => 'get_surveys',
         'description' => 'Get Surveys.',
-        'type'        => 'read'
+        'type'        => 'read',
+        'ajax'        => true
     )
 );
