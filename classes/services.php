@@ -78,12 +78,4 @@ class services extends external_api
             )
         );
     }
-
-    /**
-     * Expose to AJAX
-     * @return boolean
-     */
-    public static function get_surveys_is_allowed_from_ajax() {
-        return true;
-    }
 }
