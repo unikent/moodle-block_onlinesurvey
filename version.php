@@ -16,6 +16,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2015121200;
+$plugin->version   = 2016021900;
 $plugin->requires  = 2015111600;
 $plugin->component = 'block_onlinesurvey';
