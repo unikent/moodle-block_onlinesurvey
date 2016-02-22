@@ -35,10 +35,11 @@ $services = array(
 
 $functions = array(
     'blocks_onlinesurvey_get_surveys' => array(
-        'classname'   => 'block_onlinesurvey\services',
-        'methodname'  => 'get_surveys',
-        'description' => 'Get Surveys.',
-        'type'        => 'read',
-        'ajax'        => true
+        'classname'     => 'block_onlinesurvey\services',
+        'methodname'    => 'get_surveys',
+        'description'   => 'Get Surveys.',
+        'type'          => 'read',
+        'ajax'          => true,
+        'loginrequired' => false
     )
 );

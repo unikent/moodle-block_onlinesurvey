@@ -56,6 +56,13 @@ class services extends external_api
     public static function get_surveys() {
         global $USER;
 
+        if (!isloggedin()) {
+            return array(
+                'text' => get_string('no_surveys', 'block_onlinesurvey'),
+                'footer' => ''
+            );
+        }
+
         $core = new core();
         $content = $core->get_block_content();
 
